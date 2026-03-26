@@ -1,4 +1,5 @@
 mod ipc;
+mod profiles;
 mod pty;
 mod session;
 mod ssh;
@@ -19,6 +20,9 @@ pub fn run() {
             ipc::resize_session,
             ipc::close_session,
             ipc::list_sessions,
+            ipc::save_profile,
+            ipc::load_profiles,
+            ipc::delete_profile,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

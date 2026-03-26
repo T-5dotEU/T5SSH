@@ -19,3 +19,10 @@
 - Multi-terminal composition: each tab runs its own Terminal instance with session isolation
 - Visibility-based tab switching (hidden tabs keep PTY sessions alive)
 - Fix: terminal sizing now uses ResizeObserver and requestAnimationFrame for accurate initial dimensions
+- Connection dialog: host, port, username, identity file, jump host, port forwards, agent forwarding
+- Profile persistence: save/load/delete profiles to ~/.config/ultrassh/profiles.json
+- Profile list dialog with saved profiles, click to connect, delete
+- Tab "+" button opens connection dialog, "☰" button opens saved profiles
+- IPC commands: save_profile, load_profiles, delete_profile
+- Auto-focus terminal after connect (password input works immediately)
+- Profiles button highlighted in tab bar for better discoverability

@@ -1,22 +1,29 @@
 <script>
-  import { onMount } from 'svelte';
   import Terminal from '$lib/terminal/Terminal.svelte';
   import TabBar from '$lib/tabs/TabBar.svelte';
+  import ConnectionDialog from '$lib/connection/ConnectionDialog.svelte';
+  import ProfileList from '$lib/connection/ProfileList.svelte';
   import { tabStore } from '$lib/tabs/TabStore.svelte.js';
 
-  onMount(() => {
-    if (tabStore.tabs.length === 0) {
-      tabStore.addTab({
-        host: 'localhost',
-        port: 22,
-        user: null,
-        identity_file: null,
-        jump_host: null,
-        port_forwards: [],
-        agent_forwarding: false,
-      });
+  let showConnectionDialog = $state(false);
+  let showProfileList = $state(false);
+
+  // Show connection dialog on start if no tabs exist
+  $effect(() => {
+    if (tabStore.tabs.length === 0 && !showConnectionDialog && !showProfileList) {
+      showConnectionDialog = true;
     }
   });
+
+  function handleConnect(sshProfile) {
+    tabStore.addTab(sshProfile);
+    showConnectionDialog = false;
+  }
+
+  function handleProfileSelect(sshProfile) {
+    tabStore.addTab(sshProfile);
+    showProfileList = false;
+  }
 
   function handleExit(sessionId) {
     tabStore.markDisconnected(sessionId);
@@ -24,7 +31,10 @@
 </script>
 
 <main>
-  <TabBar />
+  <TabBar
+    onNewTab={() => showConnectionDialog = true}
+    onOpenProfiles={() => showProfileList = true}
+  />
   <div class="terminals">
     {#each tabStore.tabs as tab (tab.id)}
       <div class="terminal-pane" class:hidden={tabStore.activeTabId !== tab.id}>
@@ -38,6 +48,20 @@
     {/each}
   </div>
 </main>
+
+{#if showConnectionDialog}
+  <ConnectionDialog
+    onConnect={handleConnect}
+    onCancel={() => showConnectionDialog = false}
+  />
+{/if}
+
+{#if showProfileList}
+  <ProfileList
+    onSelect={handleProfileSelect}
+    onCancel={() => showProfileList = false}
+  />
+{/if}
 
 <style>
   :global(html, body) {

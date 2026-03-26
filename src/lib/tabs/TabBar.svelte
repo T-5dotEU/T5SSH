@@ -2,21 +2,14 @@
   import { tabStore } from './TabStore.svelte.js';
   import { closeSession } from '$lib/api/session.js';
 
+  let { onNewTab = null, onOpenProfiles = null } = $props();
+
   function switchTab(id) {
     tabStore.setActiveTab(id);
   }
 
   function addTab() {
-    const defaultProfile = {
-      host: 'localhost',
-      port: 22,
-      user: null,
-      identity_file: null,
-      jump_host: null,
-      port_forwards: [],
-      agent_forwarding: false,
-    };
-    tabStore.addTab(defaultProfile);
+    if (onNewTab) onNewTab();
   }
 
   async function removeTab(e, id) {
@@ -42,6 +35,9 @@
     </button>
   {/each}
   <button class="tab add-tab" onclick={addTab}>+</button>
+  {#if onOpenProfiles}
+    <button class="tab profiles-btn" onclick={onOpenProfiles}>☰ Profiles</button>
+  {/if}
 </div>
 
 <style>
@@ -108,5 +104,21 @@
   .add-tab:hover {
     color: #d4d4d4;
     background: #333;
+  }
+
+  .profiles-btn {
+    color: #ccc;
+    font-size: 13px;
+    padding: 0 14px;
+    background: #333;
+    border-right: none;
+    border-left: 1px solid #3c3c3c;
+    margin-left: auto;
+    gap: 4px;
+  }
+
+  .profiles-btn:hover {
+    color: #fff;
+    background: #3c3c3c;
   }
 </style>

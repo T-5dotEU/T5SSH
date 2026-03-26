@@ -184,3 +184,18 @@ pub async fn close_session(
 pub async fn list_sessions(state: State<'_, SessionManager>) -> Result<Vec<SessionInfo>, String> {
     Ok(state.list())
 }
+
+#[tauri::command]
+pub async fn save_profile(profile: crate::ssh::Profile) -> Result<(), String> {
+    crate::profiles::save_profile(profile)
+}
+
+#[tauri::command]
+pub async fn load_profiles() -> Result<Vec<crate::ssh::Profile>, String> {
+    crate::profiles::load_profiles()
+}
+
+#[tauri::command]
+pub async fn delete_profile(name: String) -> Result<(), String> {
+    crate::profiles::delete_profile(&name)
+}

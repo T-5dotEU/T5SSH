@@ -26,6 +26,9 @@
       sessionId = currentSessionId;
       if (onSessionCreated) onSessionCreated(currentSessionId);
 
+      // Auto-focus terminal so password prompts can be typed immediately
+      terminal.focus();
+
       unlistenOutput = await onSessionOutput((payload) => {
         if (payload.session_id === currentSessionId) {
           terminal.write(new Uint8Array(payload.data));
@@ -88,10 +91,11 @@
     const handleResize = () => fitAddon.fit();
     window.addEventListener('resize', handleResize);
 
-    // Re-fit when this terminal pane becomes visible (tab switch)
+    // Re-fit and focus when this terminal pane becomes visible (tab switch)
     const observer = new ResizeObserver(() => {
       if (terminalDiv.offsetParent !== null) {
         fitAddon.fit();
+        terminal.focus();
       }
     });
     observer.observe(terminalDiv);
