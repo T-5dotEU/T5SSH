@@ -1,9 +1,19 @@
 <script>
   import Terminal from '$lib/terminal/Terminal.svelte';
+
+  const testProfile = {
+    host: 'localhost',
+    port: 22,
+    user: null,
+    identity_file: null,
+    jump_host: null,
+    port_forwards: [],
+    agent_forwarding: false,
+  };
 </script>
 
 <main>
-  <Terminal />
+  <Terminal profile={testProfile} />
 </main>
 
 <style>

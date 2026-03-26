@@ -3,7 +3,7 @@ use crate::session::{Session, SessionInfo, SessionManager, SessionState};
 use crate::ssh::{build_ssh_command, SshProfile};
 use serde::Serialize;
 use std::io::{Read, Write};
-use tauri::{AppHandle, Emitter, Manager, State};
+use tauri::{AppHandle, Emitter, State};
 use tracing::{error, info};
 use uuid::Uuid;
 

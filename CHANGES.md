@@ -11,3 +11,6 @@
 - Tauri IPC commands: create_session, send_input, resize_session, close_session, list_sessions
 - Async PTY output reader with session:output, session:exit, session:error events
 - Tracing (structured logging) initialization
+- Frontend API layer (session.js) wrapping Tauri invoke/listen calls
+- Terminal component wired to backend: SSH output, keyboard input, resize sync
+- End-to-end SSH connection via PTY working
