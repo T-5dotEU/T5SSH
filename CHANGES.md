@@ -6,3 +6,5 @@
 - Basic xterm.js terminal rendering with FitAddon and resize support
 - PTY backend module (portable-pty) with create/resize abstraction
 - Session management module with lifecycle state tracking
+- SSH command builder with support for user, port, identity file, jump host, port forwarding, agent forwarding
+- Profile and PortForward data models (serde-serializable)
