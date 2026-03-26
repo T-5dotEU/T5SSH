@@ -1,0 +1,186 @@
+use crate::pty::{create_pty, resize_pty};
+use crate::session::{Session, SessionInfo, SessionManager, SessionState};
+use crate::ssh::{build_ssh_command, SshProfile};
+use serde::Serialize;
+use std::io::{Read, Write};
+use tauri::{AppHandle, Emitter, Manager, State};
+use tracing::{error, info};
+use uuid::Uuid;
+
+#[derive(Clone, Serialize)]
+struct SessionOutput {
+    session_id: String,
+    data: Vec<u8>,
+}
+
+#[derive(Clone, Serialize)]
+struct SessionEvent {
+    session_id: String,
+}
+
+#[tauri::command]
+pub async fn create_session(
+    app: AppHandle,
+    state: State<'_, SessionManager>,
+    profile: SshProfile,
+    rows: Option<u16>,
+    cols: Option<u16>,
+) -> Result<String, String> {
+    let session_id = Uuid::new_v4().to_string();
+    let rows = rows.unwrap_or(24);
+    let cols = cols.unwrap_or(80);
+
+    let label = if let Some(ref user) = profile.user {
+        format!("{}@{}", user, profile.host)
+    } else {
+        profile.host.clone()
+    };
+
+    info!(session_id = %session_id, label = %label, "Creating SSH session");
+
+    let command = build_ssh_command(&profile);
+    let (pty_handle, master) = create_pty(command, rows, cols)?;
+
+    let session = Session {
+        id: session_id.clone(),
+        state: SessionState::Connected,
+        pty_handle,
+        master,
+        label,
+    };
+
+    state.insert(session);
+
+    // Spawn a thread to read PTY output and emit events
+    let output_session_id = session_id.clone();
+    let exit_session_id = session_id.clone();
+    let sessions = state.sessions.clone();
+
+    // Take the reader out of the session for the background thread
+    let reader = {
+        let mut sessions_lock = sessions.lock().unwrap();
+        let session = sessions_lock.get_mut(&output_session_id).unwrap();
+        // We need to move the reader out — replace with a dummy
+        let reader = std::mem::replace(
+            &mut session.pty_handle.master_reader,
+            Box::new(std::io::empty()),
+        );
+        reader
+    };
+
+    let app_clone = app.clone();
+    std::thread::spawn(move || {
+        read_pty_output(reader, &output_session_id, &app_clone);
+
+        // Session exited
+        info!(session_id = %exit_session_id, "SSH session exited");
+        let _ = app_clone.emit("session:exit", SessionEvent {
+            session_id: exit_session_id.clone(),
+        });
+
+        // Update session state
+        if let Ok(mut sessions_lock) = sessions.lock() {
+            if let Some(session) = sessions_lock.get_mut(&exit_session_id) {
+                session.state = SessionState::Closed;
+            }
+        }
+    });
+
+    Ok(session_id)
+}
+
+fn read_pty_output(mut reader: Box<dyn Read + Send>, session_id: &str, app: &AppHandle) {
+    let mut buf = [0u8; 4096];
+    loop {
+        match reader.read(&mut buf) {
+            Ok(0) => break,
+            Ok(n) => {
+                let data = buf[..n].to_vec();
+                let _ = app.emit(
+                    "session:output",
+                    SessionOutput {
+                        session_id: session_id.to_string(),
+                        data,
+                    },
+                );
+            }
+            Err(e) => {
+                error!(session_id = %session_id, error = %e, "PTY read error");
+                let _ = app.emit(
+                    "session:error",
+                    SessionEvent {
+                        session_id: session_id.to_string(),
+                    },
+                );
+                break;
+            }
+        }
+    }
+}
+
+#[tauri::command]
+pub async fn send_input(
+    state: State<'_, SessionManager>,
+    session_id: String,
+    data: Vec<u8>,
+) -> Result<(), String> {
+    let mut sessions = state.sessions.lock().unwrap();
+    let session = sessions
+        .get_mut(&session_id)
+        .ok_or_else(|| format!("Session {} not found", session_id))?;
+
+    session
+        .pty_handle
+        .master_writer
+        .write_all(&data)
+        .map_err(|e| format!("Failed to write to PTY: {}", e))?;
+
+    session
+        .pty_handle
+        .master_writer
+        .flush()
+        .map_err(|e| format!("Failed to flush PTY: {}", e))?;
+
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn resize_session(
+    state: State<'_, SessionManager>,
+    session_id: String,
+    rows: u16,
+    cols: u16,
+) -> Result<(), String> {
+    let sessions = state.sessions.lock().unwrap();
+    let session = sessions
+        .get(&session_id)
+        .ok_or_else(|| format!("Session {} not found", session_id))?;
+
+    resize_pty(session.master.as_ref(), rows, cols)
+}
+
+#[tauri::command]
+pub async fn close_session(
+    state: State<'_, SessionManager>,
+    session_id: String,
+) -> Result<(), String> {
+    info!(session_id = %session_id, "Closing session");
+
+    let mut session = state
+        .remove(&session_id)
+        .ok_or_else(|| format!("Session {} not found", session_id))?;
+
+    // Kill the child process
+    session
+        .pty_handle
+        .child
+        .kill()
+        .map_err(|e| format!("Failed to kill child: {}", e))?;
+
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn list_sessions(state: State<'_, SessionManager>) -> Result<Vec<SessionInfo>, String> {
+    Ok(state.list())
+}

@@ -8,8 +8,7 @@ pub struct PtyHandle {
 }
 
 pub fn create_pty(
-    cmd: &str,
-    args: &[String],
+    command: CommandBuilder,
     rows: u16,
     cols: u16,
 ) -> Result<(PtyHandle, Box<dyn MasterPty + Send>), String> {
@@ -23,11 +22,6 @@ pub fn create_pty(
             pixel_height: 0,
         })
         .map_err(|e| format!("Failed to open PTY: {}", e))?;
-
-    let mut command = CommandBuilder::new(cmd);
-    for arg in args {
-        command.arg(arg);
-    }
 
     let child = pty_pair
         .slave
