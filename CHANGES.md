@@ -18,3 +18,4 @@
 - TabBar component with add/close/switch tabs, active and disconnected styling
 - Multi-terminal composition: each tab runs its own Terminal instance with session isolation
 - Visibility-based tab switching (hidden tabs keep PTY sessions alive)
+- Fix: terminal sizing now uses ResizeObserver and requestAnimationFrame for accurate initial dimensions

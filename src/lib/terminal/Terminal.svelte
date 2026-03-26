@@ -71,19 +71,33 @@
     fitAddon = new FitAddon();
     terminal.loadAddon(fitAddon);
     terminal.open(terminalDiv);
-    fitAddon.fit();
 
-    const handleResize = () => {
-      fitAddon.fit();
+    // Sync PTY size whenever xterm resizes (covers fit, window resize, tab switch)
+    terminal.onResize(({ cols, rows }) => {
       if (currentSessionId) {
-        resizeSession(currentSessionId, terminal.rows, terminal.cols);
+        resizeSession(currentSessionId, rows, cols);
       }
-    };
+    });
+
+    // Delay initial fit so the container has its final layout dimensions
+    requestAnimationFrame(() => {
+      fitAddon.fit();
+      connect();
+    });
+
+    const handleResize = () => fitAddon.fit();
     window.addEventListener('resize', handleResize);
 
-    connect();
+    // Re-fit when this terminal pane becomes visible (tab switch)
+    const observer = new ResizeObserver(() => {
+      if (terminalDiv.offsetParent !== null) {
+        fitAddon.fit();
+      }
+    });
+    observer.observe(terminalDiv);
 
     return () => {
+      observer.disconnect();
       window.removeEventListener('resize', handleResize);
       if (unlistenOutput) unlistenOutput();
       if (unlistenExit) unlistenExit();
