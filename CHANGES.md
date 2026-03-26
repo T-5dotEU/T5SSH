@@ -14,3 +14,7 @@
 - Frontend API layer (session.js) wrapping Tauri invoke/listen calls
 - Terminal component wired to backend: SSH output, keyboard input, resize sync
 - End-to-end SSH connection via PTY working
+- Tab management: TabStore with Svelte 5 runes ($state) for reactive tab tracking
+- TabBar component with add/close/switch tabs, active and disconnected styling
+- Multi-terminal composition: each tab runs its own Terminal instance with session isolation
+- Visibility-based tab switching (hidden tabs keep PTY sessions alive)

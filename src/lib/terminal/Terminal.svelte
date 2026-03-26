@@ -5,7 +5,7 @@
   import '@xterm/xterm/css/xterm.css';
   import { createSession, sendInput, resizeSession, closeSession, onSessionOutput, onSessionExit, onSessionError } from '$lib/api/session.js';
 
-  let { profile = null, sessionId = $bindable(null), onExit = null } = $props();
+  let { profile = null, sessionId = $bindable(null), onExit = null, onSessionCreated = null } = $props();
 
   let terminalDiv;
   let terminal;
@@ -13,6 +13,7 @@
   let unlistenOutput;
   let unlistenExit;
   let unlistenError;
+  let currentSessionId = null;
 
   async function connect() {
     if (!profile) return;
@@ -21,30 +22,32 @@
     const cols = terminal.cols;
 
     try {
-      sessionId = await createSession(profile, rows, cols);
+      currentSessionId = await createSession(profile, rows, cols);
+      sessionId = currentSessionId;
+      if (onSessionCreated) onSessionCreated(currentSessionId);
 
       unlistenOutput = await onSessionOutput((payload) => {
-        if (payload.session_id === sessionId) {
+        if (payload.session_id === currentSessionId) {
           terminal.write(new Uint8Array(payload.data));
         }
       });
 
       unlistenExit = await onSessionExit((payload) => {
-        if (payload.session_id === sessionId) {
+        if (payload.session_id === currentSessionId) {
           terminal.writeln('\r\n\x1b[33m[Session ended]\x1b[0m');
-          if (onExit) onExit(sessionId);
+          if (onExit) onExit(currentSessionId);
         }
       });
 
       unlistenError = await onSessionError((payload) => {
-        if (payload.session_id === sessionId) {
+        if (payload.session_id === currentSessionId) {
           terminal.writeln('\r\n\x1b[31m[Session error]\x1b[0m');
         }
       });
 
       terminal.onData((data) => {
-        if (sessionId) {
-          sendInput(sessionId, data);
+        if (currentSessionId) {
+          sendInput(currentSessionId, data);
         }
       });
 
@@ -72,8 +75,8 @@
 
     const handleResize = () => {
       fitAddon.fit();
-      if (sessionId) {
-        resizeSession(sessionId, terminal.rows, terminal.cols);
+      if (currentSessionId) {
+        resizeSession(currentSessionId, terminal.rows, terminal.cols);
       }
     };
     window.addEventListener('resize', handleResize);
@@ -85,7 +88,7 @@
       if (unlistenOutput) unlistenOutput();
       if (unlistenExit) unlistenExit();
       if (unlistenError) unlistenError();
-      if (sessionId) closeSession(sessionId).catch(() => {});
+      if (currentSessionId) closeSession(currentSessionId).catch(() => {});
       terminal.dispose();
     };
   });
