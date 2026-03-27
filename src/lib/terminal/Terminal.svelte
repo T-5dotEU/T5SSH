@@ -5,7 +5,7 @@
   import '@xterm/xterm/css/xterm.css';
   import { createSession, sendInput, resizeSession, closeSession, onSessionOutput, onSessionExit, onSessionError } from '$lib/api/session.js';
 
-  let { profile = null, sessionId = $bindable(null), onExit = null, onSessionCreated = null } = $props();
+  let { profile = null, sessionId = $bindable(null), onExit = null, onSessionCreated = null, password = null, profileName = null } = $props();
 
   let terminalDiv;
   let terminal;
@@ -28,7 +28,7 @@
     const cols = terminal.cols;
 
     try {
-      currentSessionId = await createSession(profile, rows, cols);
+      currentSessionId = await createSession(profile, rows, cols, password, profileName);
       sessionId = currentSessionId;
       if (onSessionCreated) onSessionCreated(currentSessionId);
 

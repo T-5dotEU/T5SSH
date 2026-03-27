@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.2.0 — 2026-03-27
+
+- Password manager: store SSH passwords securely in the system keyring (libsecret/GNOME Keyring)
+- Password field in ConnectionDialog with show/hide toggle
+- "Save Password" checkbox — stores password in system keyring, never in profiles.json
+- 🔑 indicator on profiles with stored passwords
+- SSH_ASKPASS mechanism for password delivery (SSH-native, only responds to password prompts)
+- Askpass script uses SSH_ASKPASS_REQUIRE=prefer — host key verification still works interactively
+- IPC commands: store_password, has_password, delete_password
+- Deleting a profile also cleans up its stored password from the keyring
+- keyring 3 crate with linux-native feature (libsecret backend)
+
 ## 1.0.1 — 2026-03-27
 
 - Security: Config directory permissions set to 0700, files to 0600 (profiles.json, settings.json)

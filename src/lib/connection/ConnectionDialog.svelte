@@ -1,6 +1,7 @@
 <script>
   import { onMount } from 'svelte';
   import { saveProfile, loadProfiles, deleteProfile } from '$lib/api/profiles.js';
+  import { storePassword, hasPassword, deletePassword } from '$lib/api/profiles.js';
 
   let { onConnect = null, onCancel = null, initialProfile = null, canCancel = true } = $props();
 
@@ -13,6 +14,10 @@
   let jumpHost = $state('');
   let agentForwarding = $state(false);
   let portForwards = $state([]);
+  let password = $state('');
+  let showPassword = $state(false);
+  let savePasswordChecked = $state(false);
+  let profilePasswordFlags = $state({});
 
   let saving = $state(false);
   let error = $state('');
@@ -24,6 +29,13 @@
   onMount(async () => {
     try {
       savedProfiles = await loadProfiles();
+      // Check which profiles have stored passwords
+      for (const p of savedProfiles) {
+        try {
+          profilePasswordFlags[p.name] = await hasPassword(p.name);
+        } catch (_) { /* ignore */ }
+      }
+      profilePasswordFlags = profilePasswordFlags;
     } catch (e) {
       console.error('Failed to load profiles:', e);
     }
@@ -43,6 +55,9 @@
     jumpHost = profile.ssh.jump_host ?? '';
     agentForwarding = profile.ssh.agent_forwarding ?? false;
     portForwards = profile.ssh.port_forwards?.map((f) => ({ ...f })) ?? [];
+    password = '';
+    showPassword = false;
+    savePasswordChecked = !!profilePasswordFlags[profile.name];
     requestAnimationFrame(() => connectBtn?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }));
   }
 
@@ -56,6 +71,9 @@
     jumpHost = '';
     agentForwarding = false;
     portForwards = [];
+    password = '';
+    showPassword = false;
+    savePasswordChecked = false;
     error = '';
   }
 
@@ -85,7 +103,10 @@
     if (!confirm(`Delete profile "${profileName}"?`)) return;
     try {
       await deleteProfile(profileName);
+      await deletePassword(profileName).catch(() => {});
       savedProfiles = savedProfiles.filter((p) => p.name !== profileName);
+      delete profilePasswordFlags[profileName];
+      profilePasswordFlags = profilePasswordFlags;
       if (editingProfile === profileName) clearForm();
     } catch (err) {
       console.error('Failed to delete profile:', err);
@@ -124,7 +145,11 @@
       return;
     }
     error = '';
-    if (onConnect) onConnect(buildSshProfile());
+    if (onConnect) {
+      const pw = password || null;
+      const pname = name || null;
+      onConnect(buildSshProfile(), pw, pname);
+    }
   }
 
   async function handleSave() {
@@ -141,6 +166,17 @@
     try {
       const profile = { name, ssh: buildSshProfile(), rows: 24, cols: 80 };
       await saveProfile(profile);
+
+      // Handle password storage
+      if (savePasswordChecked && password) {
+        await storePassword(name, password);
+        profilePasswordFlags[name] = true;
+      } else if (!savePasswordChecked) {
+        await deletePassword(name);
+        profilePasswordFlags[name] = false;
+      }
+      profilePasswordFlags = profilePasswordFlags;
+
       const idx = savedProfiles.findIndex((p) => p.name === name);
       if (idx >= 0) {
         savedProfiles[idx] = profile;
@@ -200,6 +236,9 @@
                 <span class="profile-name">{profile.name}</span>
                 <span class="profile-host">
                   {profile.ssh.user ? `${profile.ssh.user}@` : ''}{profile.ssh.host}:{profile.ssh.port}
+                  {#if profilePasswordFlags[profile.name]}
+                    <span class="pw-indicator" title="Password stored">🔑</span>
+                  {/if}
                 </span>
               </div>
             </div>
@@ -228,6 +267,24 @@
 
       <label for="cd-identity">Identity File</label>
       <input id="cd-identity" type="text" bind:value={identityFile} placeholder="~/.ssh/id_rsa">
+
+      <label for="cd-password">Password</label>
+      <div class="password-row">
+        {#if showPassword}
+          <input id="cd-password" type="text" bind:value={password} placeholder={savePasswordChecked && !password ? '(stored in keyring)' : '(optional)'} autocomplete="off">
+        {:else}
+          <input id="cd-password" type="password" bind:value={password} placeholder={savePasswordChecked && !password ? '(stored in keyring)' : '(optional)'} autocomplete="off">
+        {/if}
+        <button type="button" class="btn-icon toggle-pw" onclick={() => showPassword = !showPassword} title={showPassword ? 'Hide' : 'Show'}>
+          {showPassword ? '🙈' : '👁'}
+        </button>
+      </div>
+
+      <label for="cd-save-pw" class="save-pw-label">Save Password</label>
+      <div class="save-pw-row">
+        <input id="cd-save-pw" type="checkbox" bind:checked={savePasswordChecked}>
+        <span class="save-pw-hint">Store in system keyring</span>
+      </div>
 
       <label for="cd-jump">Jump Host</label>
       <input id="cd-jump" type="text" bind:value={jumpHost} placeholder="bastion.example.com">
@@ -445,6 +502,49 @@
 
   input[type="checkbox"] {
     justify-self: start;
+  }
+
+  .password-row {
+    display: flex;
+    gap: 4px;
+  }
+
+  .password-row input {
+    flex: 1;
+    background: #1e1e1e;
+    border: 1px solid #555;
+    border-radius: 4px;
+    padding: 6px 8px;
+    color: #d4d4d4;
+    font-size: 13px;
+  }
+
+  .password-row input:focus {
+    outline: none;
+    border-color: #007acc;
+  }
+
+  .toggle-pw {
+    color: #aaa;
+    font-size: 14px;
+    flex-shrink: 0;
+    width: 28px;
+  }
+
+  .save-pw-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .save-pw-hint {
+    font-size: 11px;
+    color: #888;
+  }
+
+  .pw-indicator {
+    font-size: 10px;
+    margin-left: 4px;
   }
 
   .section {

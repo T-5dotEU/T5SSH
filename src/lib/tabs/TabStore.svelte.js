@@ -9,7 +9,7 @@ function createTabState() {
     get activeTabId() { return activeTabId; },
     set activeTabId(id) { activeTabId = id; },
 
-    addTab(profile) {
+    addTab(profile, password = null, profileName = null) {
       const id = nextId++;
       const label = profile.user
         ? `${profile.user}@${profile.host}`
@@ -19,6 +19,8 @@ function createTabState() {
         id,
         label,
         profile,
+        password,
+        profileName,
         sessionId: null,
         disconnected: false,
       };

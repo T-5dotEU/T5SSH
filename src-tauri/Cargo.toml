@@ -1,6 +1,6 @@
 [package]
 name = "ultrassh"
-version = "1.0.1"
+version = "1.2.0"
 description = "A Tauri App"
 authors = ["you"]
 edition = "2021"
@@ -27,4 +27,5 @@ tracing = "0.1"
 tracing-subscriber = "0.3"
 uuid = { version = "1", features = ["v4"] }
 dirs = "6"
+keyring = { version = "3", features = ["linux-native"] }
 

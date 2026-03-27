@@ -39,8 +39,8 @@
     return () => { unlisten.then(fn => fn()); };
   });
 
-  function handleConnect(sshProfile) {
-    tabStore.addTab(sshProfile);
+  function handleConnect(sshProfile, password, profileName) {
+    tabStore.addTab(sshProfile, password, profileName);
     showConnectionDialog = false;
     editProfile = null;
   }
@@ -77,6 +77,8 @@
           bind:this={terminalRefs[tab.id]}
           profile={tab.profile}
           sessionId={tab.sessionId}
+          password={tab.password}
+          profileName={tab.profileName}
           onSessionCreated={(sid) => tabStore.setSessionId(tab.id, sid)}
           onExit={handleExit}
         />

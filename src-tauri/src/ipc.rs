@@ -3,6 +3,7 @@ use crate::session::{Session, SessionInfo, SessionManager, SessionState};
 use crate::ssh::{build_ssh_command, SshProfile};
 use serde::Serialize;
 use std::io::{Read, Write};
+use std::os::unix::fs::PermissionsExt;
 use tauri::{AppHandle, Emitter, State};
 use tracing::{error, info, warn};
 use uuid::Uuid;
@@ -25,6 +26,8 @@ pub async fn create_session(
     profile: SshProfile,
     rows: Option<u16>,
     cols: Option<u16>,
+    password: Option<String>,
+    profile_name: Option<String>,
 ) -> Result<String, String> {
     let session_id = Uuid::new_v4().to_string();
     let rows = rows.unwrap_or(24);
@@ -38,8 +41,53 @@ pub async fn create_session(
 
     info!(session_id = %session_id, "Creating SSH session");
 
-    let command = build_ssh_command(&profile);
+    let mut command = build_ssh_command(&profile);
+
+    // Resolve password: explicit password takes priority, then keyring lookup
+    let resolved_password = if password.is_some() {
+        password
+    } else if let Some(ref pname) = profile_name {
+        crate::secrets::get_password(pname).unwrap_or(None)
+    } else {
+        None
+    };
+
+    // Set up SSH_ASKPASS if we have a password
+    let askpass_path = if let Some(ref pw) = resolved_password {
+        let tmp_dir = std::env::temp_dir();
+        let askpass_file = tmp_dir.join(format!("ultrassh-askpass-{}", session_id));
+        // Script only responds to password prompts; exits 1 for anything else
+        // (e.g. host key verification) so SSH falls back to the PTY terminal.
+        let script = concat!(
+            "#!/bin/sh\n",
+            "case \"$1\" in\n",
+            "  *assword*) printf '%s' \"$ULTRASSH_PASSWORD\" ;;\n",
+            "  *) exit 1 ;;\n",
+            "esac\n",
+        );
+        std::fs::write(&askpass_file, script)
+            .map_err(|e| format!("Failed to write askpass script: {e}"))?;
+        std::fs::set_permissions(&askpass_file, std::fs::Permissions::from_mode(0o700))
+            .map_err(|e| format!("Failed to set askpass permissions: {e}"))?;
+
+        command.env("SSH_ASKPASS", askpass_file.to_string_lossy().as_ref());
+        command.env("SSH_ASKPASS_REQUIRE", "prefer");
+        command.env("ULTRASSH_PASSWORD", pw);
+        // DISPLAY must be set for SSH_ASKPASS to work
+        if std::env::var("DISPLAY").is_err() {
+            command.env("DISPLAY", ":0");
+        }
+        Some(askpass_file)
+    } else {
+        None
+    };
+
     let (pty_handle, master) = create_pty(command, rows, cols)?;
+
+    // Clean up the askpass script after PTY spawn
+    if let Some(ref path) = askpass_path {
+        let _ = std::fs::remove_file(path);
+    }
 
     let session = Session {
         id: session_id.clone(),
@@ -202,7 +250,10 @@ pub async fn load_profiles() -> Result<Vec<crate::ssh::Profile>, String> {
 
 #[tauri::command]
 pub async fn delete_profile(name: String) -> Result<(), String> {
-    crate::profiles::delete_profile(&name)
+    crate::profiles::delete_profile(&name)?;
+    // Clean up stored password (ignore errors if none exists)
+    let _ = crate::secrets::delete_password(&name);
+    Ok(())
 }
 
 #[tauri::command]
@@ -230,4 +281,19 @@ pub async fn quit_app(app: AppHandle, state: State<'_, SessionManager>) -> Resul
     }
     app.exit(0);
     Ok(())
+}
+
+#[tauri::command]
+pub async fn store_password(profile_name: String, password: String) -> Result<(), String> {
+    crate::secrets::store_password(&profile_name, &password)
+}
+
+#[tauri::command]
+pub async fn has_password(profile_name: String) -> Result<bool, String> {
+    crate::secrets::has_password(&profile_name)
+}
+
+#[tauri::command]
+pub async fn delete_password(profile_name: String) -> Result<(), String> {
+    crate::secrets::delete_password(&profile_name)
 }

@@ -1,8 +1,8 @@
 import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
 
-export async function createSession(profile, rows, cols) {
-  return await invoke('create_session', { profile, rows, cols });
+export async function createSession(profile, rows, cols, password = null, profileName = null) {
+  return await invoke('create_session', { profile, rows, cols, password, profileName });
 }
 
 export async function sendInput(sessionId, data) {

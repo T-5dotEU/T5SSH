@@ -11,3 +11,15 @@ export async function loadProfiles() {
 export async function deleteProfile(name) {
   return await invoke('delete_profile', { name });
 }
+
+export async function storePassword(profileName, password) {
+  return await invoke('store_password', { profileName, password });
+}
+
+export async function hasPassword(profileName) {
+  return await invoke('has_password', { profileName });
+}
+
+export async function deletePassword(profileName) {
+  return await invoke('delete_password', { profileName });
+}

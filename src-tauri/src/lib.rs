@@ -1,6 +1,7 @@
 mod ipc;
 mod profiles;
 mod pty;
+mod secrets;
 mod session;
 mod settings;
 mod ssh;
@@ -41,6 +42,9 @@ pub fn run() {
             ipc::delete_profile,
             ipc::close_all_sessions,
             ipc::quit_app,
+            ipc::store_password,
+            ipc::has_password,
+            ipc::delete_password,
         ]);
 
     let saved_geometry = initial_settings.window.clone();
