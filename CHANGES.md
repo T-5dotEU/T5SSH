@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.7.3-dev — 2026-03-28
+
+### Bugfixes
+
+- Fixed window height growing on each restart: save inner_size instead of outer_size (excludes title bar decoration)
+
 ## 1.7.2-dev — 2026-03-28
 
 ### Bugfixes

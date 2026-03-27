@@ -12,7 +12,7 @@ use std::sync::Mutex;
 use tauri::{Emitter, Manager, WebviewWindow};
 
 fn save_window_geometry(window: &WebviewWindow) {
-    if let (Ok(pos), Ok(size)) = (window.outer_position(), window.outer_size()) {
+    if let (Ok(pos), Ok(size)) = (window.outer_position(), window.inner_size()) {
         let geo = WindowGeometry {
             x: pos.x,
             y: pos.y,
