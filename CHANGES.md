@@ -29,3 +29,5 @@
 - Saved profiles listed in connection dialog with quick-connect on click
 - Right-click context menu on profiles (Edit / Delete)
 - Profile editing loads data into form with visual indicator
+- Profile click now loads into form (instead of instant connect), with scroll to Connect button
+- Window geometry (position & size) saved to ~/.config/ultrassh/settings.json and restored on startup

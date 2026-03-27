@@ -18,6 +18,7 @@
   let error = $state('');
   let editingProfile = $state(null);
   let contextMenu = $state(null);
+  let connectBtn;
 
   onMount(async () => {
     try {
@@ -37,6 +38,7 @@
     jumpHost = profile.ssh.jump_host ?? '';
     agentForwarding = profile.ssh.agent_forwarding ?? false;
     portForwards = profile.ssh.port_forwards?.map((f) => ({ ...f })) ?? [];
+    requestAnimationFrame(() => connectBtn?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }));
   }
 
   function clearForm() {
@@ -50,10 +52,6 @@
     agentForwarding = false;
     portForwards = [];
     error = '';
-  }
-
-  function quickConnect(profile) {
-    if (onConnect) onConnect(profile.ssh);
   }
 
   function handleContextMenu(e, profile) {
@@ -169,17 +167,17 @@
 
     {#if savedProfiles.length > 0}
       <div class="saved-profiles">
-        <h3>Saved Profiles <span class="hint">(click = connect, right-click = options)</span></h3>
+        <h3>Saved Profiles <span class="hint">(click = load, right-click = options)</span></h3>
         <div class="profile-list">
           {#each savedProfiles as profile}
             <div
               class="profile-item"
               class:editing={editingProfile === profile.name}
-              onclick={() => quickConnect(profile)}
+              onclick={() => loadIntoForm(profile)}
               oncontextmenu={(e) => handleContextMenu(e, profile)}
               role="button"
               tabindex="0"
-              onkeydown={(e) => e.key === 'Enter' && quickConnect(profile)}
+              onkeydown={(e) => e.key === 'Enter' && loadIntoForm(profile)}
             >
               <div class="profile-info">
                 <span class="profile-name">{profile.name}</span>
@@ -244,7 +242,7 @@
           {saving ? 'Saving...' : '💾 Save'}
         </button>
       {/if}
-      <button class="btn primary" onclick={handleConnect}>Connect</button>
+      <button class="btn primary" onclick={handleConnect} bind:this={connectBtn}>Connect</button>
       <button class="btn save" onclick={handleSaveAndConnect} disabled={saving}>
         {saving ? 'Saving...' : '💾 Save & Connect'}
       </button>
