@@ -46,6 +46,7 @@
       class:active={tabStore.activeTabId === tab.id}
       class:disconnected={tab.disconnected}
       onclick={() => switchTab(tab.id)}
+      onauxclick={(e) => { if (e.button === 1) removeTab(e, tab.id); }}
     >
       <span class="tab-label">{tab.label}</span>
       {#if tab.disconnected}

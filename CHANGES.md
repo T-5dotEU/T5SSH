@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.5.2-dev — 2026-03-27
+
+### UI/UX
+
+- Middle-click on tab closes the tab
+- Dark background in app.html to prevent white flash on load
+- Fixed window title (was "Tauri + SvelteKit App", now "T5SSH")
+
 ## 1.5.1-dev — 2026-03-27
 
 ### CI/CD
