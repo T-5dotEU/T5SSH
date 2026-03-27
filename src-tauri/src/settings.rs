@@ -3,10 +3,12 @@ use std::fs;
 use std::path::PathBuf;
 use tracing::{error, info};
 
-#[derive(Debug, Serialize, Deserialize, Default)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct Settings {
     #[serde(default)]
     pub window: Option<WindowGeometry>,
+    #[serde(default)]
+    pub terminal: Option<TerminalSettings>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -15,6 +17,18 @@ pub struct WindowGeometry {
     pub y: i32,
     pub width: u32,
     pub height: u32,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TerminalSettings {
+    #[serde(default)]
+    pub font_family: Option<String>,
+    #[serde(default)]
+    pub font_size: Option<u32>,
+    #[serde(default)]
+    pub color_scheme: Option<String>,
+    #[serde(default)]
+    pub scrollback_lines: Option<u32>,
 }
 
 fn settings_path() -> Result<PathBuf, String> {

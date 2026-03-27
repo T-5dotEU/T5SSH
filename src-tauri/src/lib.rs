@@ -7,7 +7,8 @@ mod settings;
 mod ssh;
 
 use session::SessionManager;
-use settings::{load_settings, save_settings, Settings, WindowGeometry};
+use settings::{load_settings, save_settings, WindowGeometry};
+use std::sync::Mutex;
 use tauri::{Emitter, Manager, WebviewWindow};
 use tracing_subscriber;
 
@@ -19,7 +20,9 @@ fn save_window_geometry(window: &WebviewWindow) {
             width: size.width,
             height: size.height,
         };
-        save_settings(&Settings { window: Some(geo) });
+        let mut current = load_settings();
+        current.window = Some(geo);
+        save_settings(&current);
     }
 }
 
@@ -31,6 +34,7 @@ pub fn run() {
 
     let mut builder = tauri::Builder::default()
         .manage(SessionManager::new())
+        .manage(Mutex::new(initial_settings.clone()))
         .invoke_handler(tauri::generate_handler![
             ipc::create_session,
             ipc::send_input,
@@ -44,7 +48,10 @@ pub fn run() {
             ipc::quit_app,
             ipc::store_password,
             ipc::has_password,
+            ipc::get_password,
             ipc::delete_password,
+            ipc::get_settings,
+            ipc::update_settings,
         ]);
 
     let saved_geometry = initial_settings.window.clone();
@@ -86,6 +93,7 @@ pub fn run() {
     });
 
     builder
+        .plugin(tauri_plugin_dialog::init())
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

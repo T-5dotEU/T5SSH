@@ -3,6 +3,7 @@ use crate::session::{Session, SessionInfo, SessionManager, SessionState};
 use crate::ssh::{build_ssh_command, SshProfile};
 use serde::Serialize;
 use std::io::{Read, Write};
+#[cfg(unix)]
 use std::os::unix::fs::PermissionsExt;
 use tauri::{AppHandle, Emitter, State};
 use tracing::{error, info, warn};
@@ -55,9 +56,15 @@ pub async fn create_session(
     // Set up SSH_ASKPASS if we have a password
     let askpass_path = if let Some(ref pw) = resolved_password {
         let tmp_dir = std::env::temp_dir();
+
+        #[cfg(unix)]
         let askpass_file = tmp_dir.join(format!("ultrassh-askpass-{}", session_id));
+        #[cfg(windows)]
+        let askpass_file = tmp_dir.join(format!("ultrassh-askpass-{}.cmd", session_id));
+
         // Script only responds to password prompts; exits 1 for anything else
         // (e.g. host key verification) so SSH falls back to the PTY terminal.
+        #[cfg(unix)]
         let script = concat!(
             "#!/bin/sh\n",
             "case \"$1\" in\n",
@@ -65,15 +72,20 @@ pub async fn create_session(
             "  *) exit 1 ;;\n",
             "esac\n",
         );
+        #[cfg(windows)]
+        let script = "@echo off\r\necho %ULTRASSH_PASSWORD%\r\n";
+
         std::fs::write(&askpass_file, script)
             .map_err(|e| format!("Failed to write askpass script: {e}"))?;
+        #[cfg(unix)]
         std::fs::set_permissions(&askpass_file, std::fs::Permissions::from_mode(0o700))
             .map_err(|e| format!("Failed to set askpass permissions: {e}"))?;
 
         command.env("SSH_ASKPASS", askpass_file.to_string_lossy().as_ref());
         command.env("SSH_ASKPASS_REQUIRE", "prefer");
         command.env("ULTRASSH_PASSWORD", pw);
-        // DISPLAY must be set for SSH_ASKPASS to work
+        // DISPLAY must be set for SSH_ASKPASS to work on Unix
+        #[cfg(unix)]
         if std::env::var("DISPLAY").is_err() {
             command.env("DISPLAY", ":0");
         }
@@ -83,11 +95,6 @@ pub async fn create_session(
     };
 
     let (pty_handle, master) = create_pty(command, rows, cols)?;
-
-    // Clean up the askpass script after PTY spawn
-    if let Some(ref path) = askpass_path {
-        let _ = std::fs::remove_file(path);
-    }
 
     let session = Session {
         id: session_id.clone(),
@@ -121,6 +128,11 @@ pub async fn create_session(
     let app_clone = app.clone();
     std::thread::spawn(move || {
         read_pty_output(reader, &output_session_id, &app_clone);
+
+        // Clean up askpass script after session ends
+        if let Some(ref path) = askpass_path {
+            let _ = std::fs::remove_file(path);
+        }
 
         // Session exited
         info!(session_id = %exit_session_id, "SSH session exited");
@@ -294,6 +306,30 @@ pub async fn has_password(profile_name: String) -> Result<bool, String> {
 }
 
 #[tauri::command]
+pub async fn get_password(profile_name: String) -> Result<Option<String>, String> {
+    crate::secrets::get_password(&profile_name)
+}
+
+#[tauri::command]
 pub async fn delete_password(profile_name: String) -> Result<(), String> {
     crate::secrets::delete_password(&profile_name)
+}
+
+#[tauri::command]
+pub async fn get_settings(
+    state: State<'_, std::sync::Mutex<crate::settings::Settings>>,
+) -> Result<crate::settings::Settings, String> {
+    let settings = state.lock().map_err(|e| format!("Lock error: {e}"))?;
+    Ok(settings.clone())
+}
+
+#[tauri::command]
+pub async fn update_settings(
+    state: State<'_, std::sync::Mutex<crate::settings::Settings>>,
+    terminal: Option<crate::settings::TerminalSettings>,
+) -> Result<(), String> {
+    let mut settings = state.lock().map_err(|e| format!("Lock error: {e}"))?;
+    settings.terminal = terminal;
+    crate::settings::save_settings(&settings);
+    Ok(())
 }

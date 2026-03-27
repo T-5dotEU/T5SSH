@@ -4,8 +4,9 @@
   import { FitAddon } from '@xterm/addon-fit';
   import '@xterm/xterm/css/xterm.css';
   import { createSession, sendInput, resizeSession, closeSession, onSessionOutput, onSessionExit, onSessionError } from '$lib/api/session.js';
+  import { colorSchemes, getTheme } from '$lib/settings/colorSchemes.js';
 
-  let { profile = null, sessionId = $bindable(null), onExit = null, onSessionCreated = null, password = null, profileName = null } = $props();
+  let { profile = null, sessionId = $bindable(null), onExit = null, onSessionCreated = null, password = null, profileName = null, terminalSettings = null } = $props();
 
   let terminalDiv;
   let terminal;
@@ -14,6 +15,18 @@
   let unlistenExit;
   let unlistenError;
   let currentSessionId = null;
+
+  // Live-update terminal when settings change
+  $effect(() => {
+    if (!terminal || !terminalSettings) return;
+    if (terminalSettings.font_family) terminal.options.fontFamily = terminalSettings.font_family;
+    if (terminalSettings.font_size) terminal.options.fontSize = terminalSettings.font_size;
+    if (terminalSettings.color_scheme) {
+      terminal.options.theme = getTheme(terminalSettings.color_scheme);
+    }
+    if (terminalSettings.scrollback_lines) terminal.options.scrollback = terminalSettings.scrollback_lines;
+    if (fitAddon) fitAddon.fit();
+  });
 
   function cleanupListeners() {
     if (unlistenOutput) { unlistenOutput(); unlistenOutput = null; }
@@ -76,15 +89,17 @@
   }
 
   onMount(() => {
+    const ff = terminalSettings?.font_family || 'Menlo, Monaco, "Courier New", monospace';
+    const fs = terminalSettings?.font_size || 14;
+    const theme = getTheme(terminalSettings?.color_scheme || 'dark');
+    const scrollback = terminalSettings?.scrollback_lines || 10000;
+
     terminal = new Terminal({
       cursorBlink: true,
-      fontSize: 14,
-      fontFamily: 'Menlo, Monaco, "Courier New", monospace',
-      theme: {
-        background: '#1e1e1e',
-        foreground: '#d4d4d4',
-        cursor: '#d4d4d4',
-      },
+      fontSize: fs,
+      fontFamily: ff,
+      theme,
+      scrollback,
     });
 
     fitAddon = new FitAddon();

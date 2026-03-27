@@ -20,6 +20,10 @@ export async function hasPassword(profileName) {
   return await invoke('has_password', { profileName });
 }
 
+export async function getPassword(profileName) {
+  return await invoke('get_password', { profileName });
+}
+
 export async function deletePassword(profileName) {
   return await invoke('delete_password', { profileName });
 }

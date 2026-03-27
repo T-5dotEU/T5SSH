@@ -1,5 +1,40 @@
 # Changelog
 
+## 1.4.0 — 2026-03-27
+
+### UI/UX Improvements
+- Settings dialog: font dropdown (8 monospace fonts), font size, color scheme (Dark/Classic), scrollback lines
+- Settings are persisted to settings.json and applied live to running terminals
+- Shared color scheme module (colorSchemes.js) — single source of truth for terminal themes
+- Double-click profile = direct connect
+- Last tab close: confirmation dialog before quitting
+- Swapped Connect / Save&Connect button positions
+- Eye icon for password toggle: red only when password visible
+- Unsaved changes confirmation when switching/loading profiles
+- Settings button (⚙) in start dialog for quick access
+- Identity file field: native file picker button (📂) via Tauri dialog plugin
+- Removed green profile banner (cleaner UI)
+- Global dark scrollbars (16px wide, WebKit-styled)
+- Dark native widgets via `color-scheme: dark` (selects, inputs, checkboxes)
+
+### Backend
+- Cross-platform password storage: keyring crate with linux-native, apple-native, windows-native features
+- Cross-platform SSH_ASKPASS: Unix shell script + Windows .cmd batch script
+- Tauri dialog plugin (tauri-plugin-dialog) for native file picker
+- TerminalSettings: font_family, font_size, color_scheme, scrollback_lines (default 10000)
+- Settings IPC: get_settings, update_settings commands
+
+### Bug Fixes
+- Color schemes were duplicated in SettingsDialog and Terminal with different values — extracted to shared module
+- Window geometry save no longer overwrites terminal settings
+
+## 1.2.1 — 2026-03-27
+
+- Fix: SSH_ASKPASS script now deleted after session ends (was deleted too early before SSH could read it)
+- Fix: Stored passwords loaded from keyring when switching profiles (new get_password IPC command)
+- Fix: Password show/hide toggle now uses direct DOM manipulation (Svelte reactive type binding workaround)
+- UX: Green success message after profile save with 2.5s auto-dismiss
+
 ## 1.2.0 — 2026-03-27
 
 - Password manager: store SSH passwords securely in the system keyring (libsecret/GNOME Keyring)

@@ -2,7 +2,7 @@
   import { tabStore } from './TabStore.svelte.js';
   import { closeSession } from '$lib/api/session.js';
 
-  let { onNewTab = null, onOpenProfiles = null, onReconnect = null } = $props();
+  let { onNewTab = null, onOpenProfiles = null, onReconnect = null, onOpenSettings = null } = $props();
 
   function switchTab(id) {
     tabStore.setActiveTab(id);
@@ -48,6 +48,9 @@
   <button class="tab add-tab" onclick={addTab}>+</button>
   {#if onOpenProfiles}
     <button class="tab profiles-btn" onclick={onOpenProfiles}>☰ Profiles</button>
+  {/if}
+  {#if onOpenSettings}
+    <button class="tab settings-btn" onclick={onOpenSettings}>⚙ Settings</button>
   {/if}
 </div>
 
@@ -140,6 +143,21 @@
   }
 
   .profiles-btn:hover {
+    color: #fff;
+    background: #3c3c3c;
+  }
+
+  .settings-btn {
+    color: #ccc;
+    font-size: 13px;
+    padding: 0 14px;
+    background: #333;
+    border-right: none;
+    border-left: 1px solid #3c3c3c;
+    gap: 4px;
+  }
+
+  .settings-btn:hover {
     color: #fff;
     background: #3c3c3c;
   }
