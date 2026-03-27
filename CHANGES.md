@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.7.2-dev — 2026-03-28
+
+### Bugfixes
+
+- Fixed UI font: system sans-serif stack (Segoe UI on Windows) instead of serif default
+- Fixed window geometry restore: use physical pixels to match save (broken with HiDPI/Windows scaling)
+
 ## 1.7.1-dev — 2026-03-28
 
 ### Bugfixes

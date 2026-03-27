@@ -65,9 +65,10 @@ pub fn run() {
         };
 
         if let Some(geo) = saved_geometry {
-            use tauri::{LogicalPosition, LogicalSize};
-            let _ = window.set_position(LogicalPosition::new(geo.x as f64, geo.y as f64));
-            let _ = window.set_size(LogicalSize::new(geo.width as f64, geo.height as f64));
+            use tauri::PhysicalPosition;
+            use tauri::PhysicalSize;
+            let _ = window.set_position(PhysicalPosition::new(geo.x, geo.y));
+            let _ = window.set_size(PhysicalSize::new(geo.width, geo.height));
             tracing::info!("Restored window geometry: {}x{} at ({}, {})", geo.width, geo.height, geo.x, geo.y);
         }
 

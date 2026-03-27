@@ -151,6 +151,9 @@
     overflow: hidden;
     background-color: #1e1e1e;
     color-scheme: dark;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", Arial, sans-serif;
+    font-size: 14px;
+    color: #d4d4d4;
   }
 
   :global(::-webkit-scrollbar) {
