@@ -2,7 +2,7 @@
   import { tabStore } from './TabStore.svelte.js';
   import { closeSession } from '$lib/api/session.js';
 
-  let { onNewTab = null, onOpenProfiles = null } = $props();
+  let { onNewTab = null, onOpenProfiles = null, onReconnect = null } = $props();
 
   function switchTab(id) {
     tabStore.setActiveTab(id);
@@ -15,10 +15,18 @@
   async function removeTab(e, id) {
     e.stopPropagation();
     const tab = tabStore.getTab(id);
+    if (tab && tab.sessionId && !tab.disconnected) {
+      if (!confirm('Active session — disconnect and close tab?')) return;
+    }
     if (tab && tab.sessionId) {
       await closeSession(tab.sessionId).catch(() => {});
     }
     tabStore.removeTab(id);
+  }
+
+  function handleReconnect(e, id) {
+    e.stopPropagation();
+    if (onReconnect) onReconnect(id);
   }
 </script>
 
@@ -31,6 +39,9 @@
       onclick={() => switchTab(tab.id)}
     >
       <span class="tab-label">{tab.label}</span>
+      {#if tab.disconnected}
+        <span class="tab-reconnect" title="Reconnect" onclick={(e) => handleReconnect(e, tab.id)}>↻</span>
+      {/if}
       <span class="tab-close" onclick={(e) => removeTab(e, tab.id)}>×</span>
     </button>
   {/each}
@@ -91,6 +102,17 @@
   .tab-close:hover {
     opacity: 1;
     color: #e04040;
+  }
+
+  .tab-reconnect {
+    font-size: 14px;
+    line-height: 1;
+    opacity: 0.7;
+    color: #4ec9b0;
+  }
+
+  .tab-reconnect:hover {
+    opacity: 1;
   }
 
   .add-tab {

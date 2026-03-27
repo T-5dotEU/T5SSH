@@ -15,6 +15,12 @@
   let unlistenError;
   let currentSessionId = null;
 
+  function cleanupListeners() {
+    if (unlistenOutput) { unlistenOutput(); unlistenOutput = null; }
+    if (unlistenExit) { unlistenExit(); unlistenExit = null; }
+    if (unlistenError) { unlistenError(); unlistenError = null; }
+  }
+
   async function connect() {
     if (!profile) return;
 
@@ -26,7 +32,6 @@
       sessionId = currentSessionId;
       if (onSessionCreated) onSessionCreated(currentSessionId);
 
-      // Auto-focus terminal so password prompts can be typed immediately
       terminal.focus();
 
       unlistenOutput = await onSessionOutput((payload) => {
@@ -45,6 +50,7 @@
       unlistenError = await onSessionError((payload) => {
         if (payload.session_id === currentSessionId) {
           terminal.writeln('\r\n\x1b[31m[Session error]\x1b[0m');
+          if (onExit) onExit(currentSessionId);
         }
       });
 
@@ -56,7 +62,17 @@
 
     } catch (e) {
       terminal.writeln(`\r\n\x1b[31mConnection failed: ${e}\x1b[0m`);
+      if (onExit) onExit(currentSessionId);
     }
+  }
+
+  export function reconnect() {
+    cleanupListeners();
+    currentSessionId = null;
+    sessionId = null;
+    terminal.reset();
+    terminal.writeln('\x1b[36mReconnecting...\x1b[0m\r\n');
+    connect();
   }
 
   onMount(() => {
@@ -75,14 +91,21 @@
     terminal.loadAddon(fitAddon);
     terminal.open(terminalDiv);
 
-    // Sync PTY size whenever xterm resizes (covers fit, window resize, tab switch)
+    // Ctrl+Shift+C/V: let browser handle (not xterm)
+    terminal.attachCustomKeyEventHandler((e) => {
+      if (e.ctrlKey && e.shiftKey && (e.key === 'C' || e.key === 'V')) {
+        return false;
+      }
+      return true;
+    });
+
+    // Sync PTY size whenever xterm resizes
     terminal.onResize(({ cols, rows }) => {
       if (currentSessionId) {
         resizeSession(currentSessionId, rows, cols);
       }
     });
 
-    // Delay initial fit so the container has its final layout dimensions
     requestAnimationFrame(() => {
       fitAddon.fit();
       connect();
@@ -91,7 +114,21 @@
     const handleResize = () => fitAddon.fit();
     window.addEventListener('resize', handleResize);
 
-    // Re-fit and focus when this terminal pane becomes visible (tab switch)
+    function handleKeydown(e) {
+      if (e.ctrlKey && e.shiftKey && e.key === 'C') {
+        e.preventDefault();
+        const sel = terminal.getSelection();
+        if (sel) navigator.clipboard.writeText(sel);
+      }
+      if (e.ctrlKey && e.shiftKey && e.key === 'V') {
+        e.preventDefault();
+        navigator.clipboard.readText().then((text) => {
+          if (text && currentSessionId) sendInput(currentSessionId, text);
+        });
+      }
+    }
+    terminalDiv.addEventListener('keydown', handleKeydown);
+
     const observer = new ResizeObserver(() => {
       if (terminalDiv.offsetParent !== null) {
         fitAddon.fit();
@@ -103,9 +140,8 @@
     return () => {
       observer.disconnect();
       window.removeEventListener('resize', handleResize);
-      if (unlistenOutput) unlistenOutput();
-      if (unlistenExit) unlistenExit();
-      if (unlistenError) unlistenError();
+      terminalDiv.removeEventListener('keydown', handleKeydown);
+      cleanupListeners();
       if (currentSessionId) closeSession(currentSessionId).catch(() => {});
       terminal.dispose();
     };

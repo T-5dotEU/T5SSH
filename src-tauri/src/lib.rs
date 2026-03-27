@@ -7,7 +7,7 @@ mod ssh;
 
 use session::SessionManager;
 use settings::{load_settings, save_settings, Settings, WindowGeometry};
-use tauri::Manager;
+use tauri::{Emitter, Manager};
 use tracing_subscriber;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -28,6 +28,8 @@ pub fn run() {
             ipc::save_profile,
             ipc::load_profiles,
             ipc::delete_profile,
+            ipc::close_all_sessions,
+            ipc::quit_app,
         ]);
 
     let saved_geometry = initial_settings.window.clone();
@@ -42,12 +44,13 @@ pub fn run() {
             tracing::info!("Restored window geometry: {}x{} at ({}, {})", geo.width, geo.height, geo.x, geo.y);
         }
 
-        let win = window.clone();
+        let win_geo = window.clone();
+        let win_close = window.clone();
         window.on_window_event(move |event| {
             use tauri::WindowEvent;
             match event {
-                WindowEvent::Resized(_) | WindowEvent::Moved(_) | WindowEvent::CloseRequested { .. } => {
-                    if let (Ok(pos), Ok(size)) = (win.outer_position(), win.outer_size()) {
+                WindowEvent::Resized(_) | WindowEvent::Moved(_) => {
+                    if let (Ok(pos), Ok(size)) = (win_geo.outer_position(), win_geo.outer_size()) {
                         let geo = WindowGeometry {
                             x: pos.x,
                             y: pos.y,
@@ -56,6 +59,21 @@ pub fn run() {
                         };
                         save_settings(&Settings { window: Some(geo) });
                     }
+                }
+                WindowEvent::CloseRequested { api, .. } => {
+                    // Save geometry
+                    if let (Ok(pos), Ok(size)) = (win_geo.outer_position(), win_geo.outer_size()) {
+                        let geo = WindowGeometry {
+                            x: pos.x,
+                            y: pos.y,
+                            width: size.width,
+                            height: size.height,
+                        };
+                        save_settings(&Settings { window: Some(geo) });
+                    }
+                    // Prevent immediate close, let frontend confirm
+                    api.prevent_close();
+                    let _ = win_close.emit("app:close-requested", ());
                 }
                 _ => {}
             }

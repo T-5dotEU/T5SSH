@@ -61,6 +61,11 @@ function createTabState() {
       const tab = tabs.find((t) => t.sessionId === sessionId);
       if (tab) tab.disconnected = true;
     },
+
+    markReconnecting(tabId) {
+      const tab = tabs.find((t) => t.id === tabId);
+      if (tab) tab.disconnected = false;
+    },
   };
 }
 

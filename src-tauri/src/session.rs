@@ -67,4 +67,9 @@ impl SessionManager {
             .map(|s| s.info())
             .collect()
     }
+
+    pub fn drain_all(&self) -> Vec<Session> {
+        let mut sessions = self.sessions.lock().unwrap();
+        sessions.drain().map(|(_, s)| s).collect()
+    }
 }

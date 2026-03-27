@@ -1,19 +1,42 @@
 <script>
+  import { onMount } from 'svelte';
   import Terminal from '$lib/terminal/Terminal.svelte';
   import TabBar from '$lib/tabs/TabBar.svelte';
   import ConnectionDialog from '$lib/connection/ConnectionDialog.svelte';
   import ProfileList from '$lib/connection/ProfileList.svelte';
   import { tabStore } from '$lib/tabs/TabStore.svelte.js';
+  import { invoke } from '@tauri-apps/api/core';
+  import { listen } from '@tauri-apps/api/event';
 
   let showConnectionDialog = $state(false);
   let showProfileList = $state(false);
   let editProfile = $state(null);
+  let terminalRefs = {};
+  let everHadTabs = false;
 
-  // Show connection dialog on start if no tabs exist
+  // Show connection dialog on start; quit app when last tab closed
   $effect(() => {
-    if (tabStore.tabs.length === 0 && !showConnectionDialog && !showProfileList) {
+    if (tabStore.tabs.length > 0) {
+      everHadTabs = true;
+    } else if (everHadTabs) {
+      invoke('quit_app');
+    } else if (!showConnectionDialog && !showProfileList) {
       showConnectionDialog = true;
     }
+  });
+
+  onMount(() => {
+    const unlisten = listen('app:close-requested', () => {
+      const activeSessions = tabStore.tabs.filter(t => !t.disconnected);
+      if (activeSessions.length === 0) {
+        invoke('quit_app');
+        return;
+      }
+      if (confirm(`${activeSessions.length} active session(s) — quit and close all?`)) {
+        invoke('quit_app');
+      }
+    });
+    return () => { unlisten.then(fn => fn()); };
   });
 
   function handleConnect(sshProfile) {
@@ -31,17 +54,25 @@
   function handleExit(sessionId) {
     tabStore.markDisconnected(sessionId);
   }
+
+  function handleReconnect(tabId) {
+    tabStore.markReconnecting(tabId);
+    const ref = terminalRefs[tabId];
+    if (ref) ref.reconnect();
+  }
 </script>
 
 <main>
   <TabBar
     onNewTab={() => showConnectionDialog = true}
     onOpenProfiles={() => showProfileList = true}
+    onReconnect={handleReconnect}
   />
   <div class="terminals">
     {#each tabStore.tabs as tab (tab.id)}
       <div class="terminal-pane" class:hidden={tabStore.activeTabId !== tab.id}>
         <Terminal
+          bind:this={terminalRefs[tab.id]}
           profile={tab.profile}
           sessionId={tab.sessionId}
           onSessionCreated={(sid) => tabStore.setSessionId(tab.id, sid)}

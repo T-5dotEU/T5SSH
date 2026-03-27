@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.2.0 — 2026-03-27
+
+- Copy/Paste: Ctrl+Shift+C / Ctrl+Shift+V (like KDE Konsole)
+- Reconnect button (↻) on disconnected tabs to re-establish SSH session in-place
+- Close confirmation: closing a tab with an active session requires confirmation
+- Close confirmation: closing the app window with active sessions requires confirmation
+- SSH crash/disconnect handling: session marked as disconnected with reconnect option
+- Last tab closed → app quits (instead of showing connection dialog)
+- IPC commands: close_all_sessions, quit_app
+- Rust: drain_all() on SessionManager for clean shutdown
+- Window close interception via CloseRequested event + frontend confirmation
+
 ## 0.1.0 — 2026-03-26
 
 - Initial project scaffold (Tauri v2 + Svelte 5)

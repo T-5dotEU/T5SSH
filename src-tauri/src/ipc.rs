@@ -199,3 +199,24 @@ pub async fn load_profiles() -> Result<Vec<crate::ssh::Profile>, String> {
 pub async fn delete_profile(name: String) -> Result<(), String> {
     crate::profiles::delete_profile(&name)
 }
+
+#[tauri::command]
+pub async fn close_all_sessions(state: State<'_, SessionManager>) -> Result<(), String> {
+    info!("Closing all sessions");
+    let sessions = state.drain_all();
+    for mut session in sessions {
+        let _ = session.pty_handle.child.kill();
+    }
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn quit_app(app: AppHandle, state: State<'_, SessionManager>) -> Result<(), String> {
+    info!("Quitting app — closing all sessions");
+    let sessions = state.drain_all();
+    for mut session in sessions {
+        let _ = session.pty_handle.child.kill();
+    }
+    app.exit(0);
+    Ok(())
+}
