@@ -29,7 +29,6 @@ pub fn run() {
     let initial_settings = load_settings();
 
     let mut builder = tauri::Builder::default()
-        .plugin(tauri_plugin_opener::init())
         .manage(SessionManager::new())
         .invoke_handler(tauri::generate_handler![
             ipc::create_session,

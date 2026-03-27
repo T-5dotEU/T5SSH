@@ -8,6 +8,11 @@ fn profiles_path() -> Result<PathBuf, String> {
     let dir = config_dir.join("ultrassh");
     if !dir.exists() {
         fs::create_dir_all(&dir).map_err(|e| format!("Failed to create config dir: {e}"))?;
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            let _ = fs::set_permissions(&dir, fs::Permissions::from_mode(0o700));
+        }
     }
     Ok(dir.join("profiles.json"))
 }
@@ -29,6 +34,11 @@ pub fn save_profiles(profiles: &[Profile]) -> Result<(), String> {
         .map_err(|e| format!("Failed to serialize profiles: {e}"))?;
     let tmp = path.with_extension("json.tmp");
     fs::write(&tmp, &data).map_err(|e| format!("Failed to write profiles tmp: {e}"))?;
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        let _ = fs::set_permissions(&tmp, fs::Permissions::from_mode(0o600));
+    }
     fs::rename(&tmp, &path).map_err(|e| format!("Failed to rename profiles: {e}"))?;
     info!("Saved {} profiles to {:?}", profiles.len(), path);
     Ok(())

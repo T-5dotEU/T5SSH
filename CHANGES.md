@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.0.1 — 2026-03-27
+
+- Security: Config directory permissions set to 0700, files to 0600 (profiles.json, settings.json)
+- Security: StrictHostKeyChecking changed from accept-new to ask (interactive host key verification)
+- Security: ConnectTimeout=30 added to prevent indefinite connection hangs
+- Security: Removed user@host from log output (session ID only)
+- Security: Removed unused tauri-plugin-opener (reduced attack surface)
+
 ## 1.0.0 — 2026-03-27
 
 - Consistent button color scheme across all components:

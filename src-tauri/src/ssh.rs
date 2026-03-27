@@ -64,10 +64,12 @@ pub fn build_ssh_command(profile: &SshProfile) -> CommandBuilder {
         cmd.arg("-A");
     }
 
-    // Disable strict host key checking prompts that might confuse users
-    // (they can still be handled via ~/.ssh/config)
+    // Let SSH handle host key verification interactively in the terminal
     cmd.arg("-o");
-    cmd.arg("StrictHostKeyChecking=accept-new");
+    cmd.arg("StrictHostKeyChecking=ask");
+
+    cmd.arg("-o");
+    cmd.arg("ConnectTimeout=30");
 
     cmd.arg(&profile.host);
 

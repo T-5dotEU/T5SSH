@@ -36,7 +36,7 @@ pub async fn create_session(
         profile.host.clone()
     };
 
-    info!(session_id = %session_id, label = %label, "Creating SSH session");
+    info!(session_id = %session_id, "Creating SSH session");
 
     let command = build_ssh_command(&profile);
     let (pty_handle, master) = create_pty(command, rows, cols)?;

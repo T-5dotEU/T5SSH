@@ -22,6 +22,11 @@ fn settings_path() -> Result<PathBuf, String> {
     let dir = config_dir.join("ultrassh");
     if !dir.exists() {
         fs::create_dir_all(&dir).map_err(|e| format!("Failed to create config dir: {e}"))?;
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            let _ = fs::set_permissions(&dir, fs::Permissions::from_mode(0o700));
+        }
     }
     Ok(dir.join("settings.json"))
 }
@@ -49,10 +54,17 @@ pub fn save_settings(settings: &Settings) {
                     let tmp = path.with_extension("json.tmp");
                     if let Err(e) = fs::write(&tmp, &json) {
                         error!("Failed to write settings tmp: {e}");
-                    } else if let Err(e) = fs::rename(&tmp, &path) {
-                        error!("Failed to rename settings: {e}");
                     } else {
-                        info!("Settings saved");
+                        #[cfg(unix)]
+                        {
+                            use std::os::unix::fs::PermissionsExt;
+                            let _ = fs::set_permissions(&tmp, fs::Permissions::from_mode(0o600));
+                        }
+                        if let Err(e) = fs::rename(&tmp, &path) {
+                            error!("Failed to rename settings: {e}");
+                        } else {
+                            info!("Settings saved");
+                        }
                     }
                 }
                 Err(e) => error!("Failed to serialize settings: {e}"),
