@@ -2,5 +2,5 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 fn main() {
-    ultrassh_lib::run()
+    t5ssh_lib::run()
 }

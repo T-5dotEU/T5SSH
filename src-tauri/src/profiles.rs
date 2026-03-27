@@ -5,7 +5,7 @@ use tracing::info;
 
 fn profiles_path() -> Result<PathBuf, String> {
     let config_dir = dirs::config_dir().ok_or("Could not determine config directory")?;
-    let dir = config_dir.join("ultrassh");
+    let dir = config_dir.join("t5ssh");
     if !dir.exists() {
         fs::create_dir_all(&dir).map_err(|e| format!("Failed to create config dir: {e}"))?;
         #[cfg(unix)]

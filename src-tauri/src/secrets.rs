@@ -1,7 +1,7 @@
 use keyring::Entry;
 use tracing::{info, warn};
 
-const SERVICE: &str = "ultrassh";
+const SERVICE: &str = "t5ssh";
 
 fn entry_for(profile_name: &str) -> Result<Entry, String> {
     Entry::new(SERVICE, profile_name).map_err(|e| format!("Keyring error: {e}"))

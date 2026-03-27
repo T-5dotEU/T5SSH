@@ -3,6 +3,7 @@
 ## 1.4.0 — 2026-03-27
 
 ### UI/UX Improvements
+
 - Settings dialog: font dropdown (8 monospace fonts), font size, color scheme (Dark/Classic), scrollback lines
 - Settings are persisted to settings.json and applied live to running terminals
 - Shared color scheme module (colorSchemes.js) — single source of truth for terminal themes
@@ -18,6 +19,7 @@
 - Dark native widgets via `color-scheme: dark` (selects, inputs, checkboxes)
 
 ### Backend
+
 - Cross-platform password storage: keyring crate with linux-native, apple-native, windows-native features
 - Cross-platform SSH_ASKPASS: Unix shell script + Windows .cmd batch script
 - Tauri dialog plugin (tauri-plugin-dialog) for native file picker
@@ -25,6 +27,7 @@
 - Settings IPC: get_settings, update_settings commands
 
 ### Bug Fixes
+
 - Color schemes were duplicated in SettingsDialog and Terminal with different values — extracted to shared module
 - Window geometry save no longer overwrites terminal settings
 
@@ -115,7 +118,7 @@
 - Visibility-based tab switching (hidden tabs keep PTY sessions alive)
 - Fix: terminal sizing now uses ResizeObserver and requestAnimationFrame for accurate initial dimensions
 - Connection dialog: host, port, username, identity file, jump host, port forwards, agent forwarding
-- Profile persistence: save/load/delete profiles to ~/.config/ultrassh/profiles.json
+- Profile persistence: save/load/delete profiles to ~/.config/t5ssh/profiles.json
 - Profile list dialog with saved profiles, click to connect, delete
 - Tab "+" button opens connection dialog, "☰" button opens saved profiles
 - IPC commands: save_profile, load_profiles, delete_profile
@@ -125,7 +128,7 @@
 - Right-click context menu on profiles (Edit / Delete)
 - Profile editing loads data into form with visual indicator
 - Profile click now loads into form (instead of instant connect), with scroll to Connect button
-- Window geometry (position & size) saved to ~/.config/ultrassh/settings.json and restored on startup
+- Window geometry (position & size) saved to ~/.config/t5ssh/settings.json and restored on startup
 - Profile list (☰) click loads profile into ConnectionDialog instead of direct connect
 - Sticky "ready to connect" banner with ▶ Connect button pinned at top of dialog when profile loaded
 - Right-click context menu (Edit / Delete) in profile list dialog, consistent with connection dialog

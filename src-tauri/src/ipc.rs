@@ -58,9 +58,9 @@ pub async fn create_session(
         let tmp_dir = std::env::temp_dir();
 
         #[cfg(unix)]
-        let askpass_file = tmp_dir.join(format!("ultrassh-askpass-{}", session_id));
+        let askpass_file = tmp_dir.join(format!("t5ssh-askpass-{}", session_id));
         #[cfg(windows)]
-        let askpass_file = tmp_dir.join(format!("ultrassh-askpass-{}.cmd", session_id));
+        let askpass_file = tmp_dir.join(format!("t5ssh-askpass-{}.cmd", session_id));
 
         // Script only responds to password prompts; exits 1 for anything else
         // (e.g. host key verification) so SSH falls back to the PTY terminal.
@@ -68,12 +68,12 @@ pub async fn create_session(
         let script = concat!(
             "#!/bin/sh\n",
             "case \"$1\" in\n",
-            "  *assword*) printf '%s' \"$ULTRASSH_PASSWORD\" ;;\n",
+            "  *assword*) printf '%s' \"$T5SSH_PASSWORD\" ;;\n",
             "  *) exit 1 ;;\n",
             "esac\n",
         );
         #[cfg(windows)]
-        let script = "@echo off\r\necho %ULTRASSH_PASSWORD%\r\n";
+        let script = "@echo off\r\necho %T5SSH_PASSWORD%\r\n";
 
         std::fs::write(&askpass_file, script)
             .map_err(|e| format!("Failed to write askpass script: {e}"))?;
@@ -83,7 +83,7 @@ pub async fn create_session(
 
         command.env("SSH_ASKPASS", askpass_file.to_string_lossy().as_ref());
         command.env("SSH_ASKPASS_REQUIRE", "prefer");
-        command.env("ULTRASSH_PASSWORD", pw);
+        command.env("T5SSH_PASSWORD", pw);
         // DISPLAY must be set for SSH_ASKPASS to work on Unix
         #[cfg(unix)]
         if std::env::var("DISPLAY").is_err() {
