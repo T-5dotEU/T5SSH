@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.7.1-dev — 2026-03-27
+
+- Confirmed: SSH login and terminal output working on Windows
+
 ## 1.7.0-dev — 2026-03-27
 
 ### Bugfixes
