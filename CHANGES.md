@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.5.3-dev — 2026-03-27
+
+### CI/CD
+
+- GitHub Actions: Node.js 20 → 24 (deprecation fix)
+
 ## 1.5.2-dev — 2026-03-27
 
 ### UI/UX
