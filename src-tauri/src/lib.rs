@@ -10,7 +10,6 @@ use session::SessionManager;
 use settings::{load_settings, save_settings, WindowGeometry};
 use std::sync::Mutex;
 use tauri::{Emitter, Manager, WebviewWindow};
-use tracing_subscriber;
 
 fn save_window_geometry(window: &WebviewWindow) {
     if let (Ok(pos), Ok(size)) = (window.outer_position(), window.outer_size()) {

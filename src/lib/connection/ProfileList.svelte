@@ -4,8 +4,10 @@
 
   let { onCancel = null, onEdit = null, onNewConnection = null } = $props();
 
+  /** @type {any[]} */
   let profiles = $state([]);
   let loading = $state(true);
+  /** @type {{x: number, y: number, profile: any}|null} */
   let contextMenu = $state(null);
 
   onMount(async () => {
@@ -18,10 +20,12 @@
     }
   });
 
+  /** @param {any} profile */
   function handleSelect(profile) {
     if (onEdit) onEdit(profile);
   }
 
+  /** @param {MouseEvent} e @param {any} profile */
   function handleContextMenu(e, profile) {
     e.preventDefault();
     e.stopPropagation();
@@ -54,6 +58,7 @@
     }
   }
 
+  /** @param {KeyboardEvent} e */
   function handleKeydown(e) {
     if (e.key === 'Escape') {
       if (contextMenu) { closeContextMenu(); return; }

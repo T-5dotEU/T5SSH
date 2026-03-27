@@ -6,6 +6,13 @@
 
 - GitHub Actions workflow for .deb, .rpm and Windows builds
 
+### Code Quality
+
+- Fixed all 135 svelte-check errors: JSDoc type annotations for all JS/Svelte files
+- Fixed 2 Clippy warnings: removed unused import, inlined let binding
+- Removed unused CSS selector in SettingsDialog
+- Result: 0 errors, 0 warnings across both Rust (clippy) and Svelte (svelte-check)
+
 ## 1.5.0-dev — 2026-03-27
 
 ### Branding

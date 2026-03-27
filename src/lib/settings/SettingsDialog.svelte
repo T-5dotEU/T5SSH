@@ -37,7 +37,7 @@
   });
 
   function currentTheme() {
-    return colorSchemes[colorScheme] || colorSchemes.dark;
+    return colorSchemes[/** @type {keyof colorSchemes} */ (colorScheme)] || colorSchemes.dark;
   }
 
   async function handleSave() {
@@ -59,6 +59,7 @@
     }
   }
 
+  /** @param {KeyboardEvent} e */
   function handleKeydown(e) {
     if (e.key === 'Escape' && onClose) onClose();
   }
@@ -179,7 +180,6 @@
     border-color: #007acc;
   }
 
-  input[type="text"],
   input[type="number"] {
     background: #1e1e1e;
     border: 1px solid #3c3c3c;

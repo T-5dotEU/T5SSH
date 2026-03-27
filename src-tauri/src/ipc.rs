@@ -118,11 +118,10 @@ pub async fn create_session(
         let session = sessions_lock.get_mut(&output_session_id)
             .ok_or_else(|| format!("Session {} not found after insert", output_session_id))?;
         // We need to move the reader out — replace with a dummy
-        let reader = std::mem::replace(
+        std::mem::replace(
             &mut session.pty_handle.master_reader,
             Box::new(std::io::empty()),
-        );
-        reader
+        )
     };
 
     let app_clone = app.clone();

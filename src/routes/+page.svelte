@@ -14,8 +14,10 @@
   let showProfileList = $state(false);
   let showSettings = $state(false);
   let editProfile = $state(null);
+  /** @type {Record<number, any>} */
   let terminalRefs = {};
   let everHadTabs = false;
+  /** @type {any} */
   let terminalSettings = $state(null);
 
   // Show connection dialog on start; ask before quitting when last tab closed
@@ -52,30 +54,39 @@
     return () => { unlisten.then(fn => fn()); };
   });
 
+  /**
+   * @param {Record<string, any>} sshProfile
+   * @param {string|null} password
+   * @param {string|null} profileName
+   */
   function handleConnect(sshProfile, password, profileName) {
     tabStore.addTab(sshProfile, password, profileName);
     showConnectionDialog = false;
     editProfile = null;
   }
 
+  /** @param {any} profile */
   function handleProfileEdit(profile) {
     showProfileList = false;
     editProfile = profile;
     showConnectionDialog = true;
   }
 
+  /** @param {string} sessionId */
   function handleExit(sessionId) {
     tabStore.markDisconnected(sessionId);
     const tab = tabStore.tabs.find(t => t.sessionId === sessionId);
     if (tab) delete terminalRefs[tab.id];
   }
 
+  /** @param {number} tabId */
   function handleReconnect(tabId) {
     tabStore.markReconnecting(tabId);
     const ref = terminalRefs[tabId];
     if (ref) ref.reconnect();
   }
 
+  /** @param {any} ts */
   function handleSettingsApply(ts) {
     terminalSettings = ts;
   }
@@ -98,7 +109,7 @@
           password={tab.password}
           profileName={tab.profileName}
           {terminalSettings}
-          onSessionCreated={(sid) => tabStore.setSessionId(tab.id, sid)}
+          onSessionCreated={(/** @type {string} */ sid) => tabStore.setSessionId(tab.id, sid)}
           onExit={handleExit}
         />
       </div>

@@ -43,6 +43,7 @@ export const colorSchemes = {
   },
 };
 
+/** @param {string} schemeName */
 export function getTheme(schemeName) {
-  return colorSchemes[schemeName] || colorSchemes.dark;
+  return colorSchemes[/** @type {keyof colorSchemes} */ (schemeName)] || colorSchemes.dark;
 }

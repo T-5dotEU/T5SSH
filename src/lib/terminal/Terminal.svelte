@@ -8,12 +8,19 @@
 
   let { profile = null, sessionId = $bindable(null), onExit = null, onSessionCreated = null, password = null, profileName = null, terminalSettings = null } = $props();
 
+  /** @type {HTMLDivElement} */
   let terminalDiv;
+  /** @type {import('@xterm/xterm').Terminal} */
   let terminal;
+  /** @type {import('@xterm/addon-fit').FitAddon} */
   let fitAddon;
-  let unlistenOutput;
-  let unlistenExit;
-  let unlistenError;
+  /** @type {(() => void)|null} */
+  let unlistenOutput = null;
+  /** @type {(() => void)|null} */
+  let unlistenExit = null;
+  /** @type {(() => void)|null} */
+  let unlistenError = null;
+  /** @type {string|null} */
   let currentSessionId = null;
 
   // Live-update terminal when settings change
@@ -47,27 +54,27 @@
 
       terminal.focus();
 
-      unlistenOutput = await onSessionOutput((payload) => {
+      unlistenOutput = await onSessionOutput((/** @type {any} */ payload) => {
         if (payload.session_id === currentSessionId) {
           terminal.write(new Uint8Array(payload.data));
         }
       });
 
-      unlistenExit = await onSessionExit((payload) => {
+      unlistenExit = await onSessionExit((/** @type {any} */ payload) => {
         if (payload.session_id === currentSessionId) {
           terminal.writeln('\r\n\x1b[33m[Session ended]\x1b[0m');
           if (onExit) onExit(currentSessionId);
         }
       });
 
-      unlistenError = await onSessionError((payload) => {
+      unlistenError = await onSessionError((/** @type {any} */ payload) => {
         if (payload.session_id === currentSessionId) {
           terminal.writeln('\r\n\x1b[31m[Session error]\x1b[0m');
           if (onExit) onExit(currentSessionId);
         }
       });
 
-      terminal.onData((data) => {
+      terminal.onData((/** @type {string} */ data) => {
         if (currentSessionId) {
           sendInput(currentSessionId, data);
         }

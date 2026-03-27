@@ -4,6 +4,7 @@
 
   let { onNewTab = null, onOpenProfiles = null, onReconnect = null, onOpenSettings = null } = $props();
 
+  /** @param {number} id */
   function switchTab(id) {
     tabStore.setActiveTab(id);
   }
@@ -12,6 +13,10 @@
     if (onNewTab) onNewTab();
   }
 
+  /**
+   * @param {MouseEvent} e
+   * @param {number} id
+   */
   async function removeTab(e, id) {
     e.stopPropagation();
     const tab = tabStore.tabs.find(t => t.id === id);
@@ -24,6 +29,10 @@
     tabStore.removeTab(id);
   }
 
+  /**
+   * @param {MouseEvent} e
+   * @param {number} id
+   */
   function handleReconnect(e, id) {
     e.stopPropagation();
     if (onReconnect) onReconnect(id);

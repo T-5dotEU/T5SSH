@@ -7,6 +7,7 @@
 
   let { onConnect = null, onCancel = null, onOpenSettings = null, initialProfile = null, canCancel = true } = $props();
 
+  /** @type {any[]} */
   let savedProfiles = $state([]);
   let name = $state('');
   let host = $state('');
@@ -15,10 +16,12 @@
   let identityFile = $state('');
   let jumpHost = $state('');
   let agentForwarding = $state(false);
+  /** @type {any[]} */
   let portForwards = $state([]);
   let password = $state('');
   let showPassword = $state(false);
   let savePasswordChecked = $state(false);
+  /** @type {Record<string, boolean>} */
   let profilePasswordFlags = $state({});
 
   /** @type {any} */
@@ -27,9 +30,13 @@
   let saving = $state(false);
   let error = $state('');
   let successMsg = $state('');
+  /** @type {string|null} */
   let editingProfile = $state(null);
+  /** @type {{x: number, y: number, profile: any}|null} */
   let contextMenu = $state(null);
+  /** @type {HTMLButtonElement} */
   let connectBtn;
+  /** @type {HTMLDivElement} */
   let formGrid;
 
   onMount(async () => {
@@ -51,6 +58,7 @@
     }
   });
 
+  /** @param {any} profile */
   async function loadIntoForm(profile) {
     editingProfile = profile.name;
     name = profile.name;
@@ -60,7 +68,7 @@
     identityFile = profile.ssh.identity_file ?? '';
     jumpHost = profile.ssh.jump_host ?? '';
     agentForwarding = profile.ssh.agent_forwarding ?? false;
-    portForwards = profile.ssh.port_forwards?.map((f) => ({ ...f })) ?? [];
+    portForwards = profile.ssh.port_forwards?.map((/** @type {any} */ f) => ({ ...f })) ?? [];
     showPassword = false;
     savePasswordChecked = !!profilePasswordFlags[profile.name];
     // Load stored password from keyring
@@ -112,6 +120,7 @@
     formSnapshot = null;
   }
 
+  /** @param {MouseEvent} e @param {any} profile */
   function handleContextMenu(e, profile) {
     e.preventDefault();
     e.stopPropagation();
@@ -155,6 +164,7 @@
     portForwards.push({ local_port: 0, remote_host: 'localhost', remote_port: 0 });
   }
 
+  /** @param {number} idx */
   function removePortForward(idx) {
     portForwards.splice(idx, 1);
   }
@@ -215,7 +225,7 @@
       const profile = { name, ssh: buildSshProfile(), rows: 24, cols: 80 };
 
       // Rename: delete old profile on disk and clean up old password
-      if (doRename) {
+      if (doRename && editingProfile) {
         await deleteProfile(editingProfile).catch(() => {});
         await deletePassword(editingProfile).catch(() => {});
         delete profilePasswordFlags[editingProfile];
@@ -273,12 +283,14 @@
     if (!error) handleConnect();
   }
 
+  /** @param {any} profile */
   function handleProfileDblClick(profile) {
     if (!confirmDiscardChanges()) return;
     loadIntoForm(profile);
     requestAnimationFrame(() => handleConnect());
   }
 
+  /** @param {KeyboardEvent} e */
   function handleKeydown(e) {
     if (e.key === 'Escape') {
       if (contextMenu) { closeContextMenu(); return; }
@@ -348,13 +360,13 @@
       <label for="cd-identity">Identity File</label>
       <div class="identity-row">
         <input id="cd-identity" type="text" bind:value={identityFile} placeholder="~/.ssh/id_rsa">
-        <button type="button" class="btn-icon browse-btn" title="Browse..." onclick={async () => { const f = await open({ title: 'Select Identity File', directory: false, multiple: false }); if (f) identityFile = f; }}>📂</button>
+        <button type="button" class="btn-icon browse-btn" title="Browse..." onclick={async () => { const f = await open({ title: 'Select Identity File', directory: false, multiple: false }); if (f) identityFile = /** @type {string} */ (f); }}>📂</button>
       </div>
 
       <label for="cd-password">Password</label>
       <div class="password-row">
         <input id="cd-password" type="password" bind:value={password} placeholder={savePasswordChecked && !password ? '(stored in keyring)' : '(optional)'} autocomplete="off">
-        <button type="button" class="btn-icon toggle-pw" class:showing={showPassword} onclick={(e) => { const inp = document.getElementById('cd-password'); if (inp) { inp.type = inp.type === 'password' ? 'text' : 'password'; showPassword = inp.type === 'text'; } }} title={showPassword ? 'Hide' : 'Show'}>
+        <button type="button" class="btn-icon toggle-pw" class:showing={showPassword} onclick={(e) => { const inp = /** @type {HTMLInputElement|null} */ (document.getElementById('cd-password')); if (inp) { inp.type = inp.type === 'password' ? 'text' : 'password'; showPassword = inp.type === 'text'; } }} title={showPassword ? 'Hide' : 'Show'}>
           {#if showPassword}
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
           {:else}
