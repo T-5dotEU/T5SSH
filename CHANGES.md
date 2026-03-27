@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.2.2 — 2026-03-27
+## 1.0.0 — 2026-03-27
 
 - Consistent button color scheme across all components:
   - Primary (blue): Connect/Go actions
@@ -8,6 +8,8 @@
   - Cancel (red outline): Cancel buttons
   - Danger (red): Delete actions
   - Secondary (gray): Neutral actions
+- Hide Cancel button in connection dialog when no tabs are open
+- Fix: ProfileList horizontal scrollbar removed (overflow-x: hidden)
 
 ## 0.2.1 — 2026-03-27
 

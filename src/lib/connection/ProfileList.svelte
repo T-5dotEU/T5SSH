@@ -129,6 +129,7 @@
     width: 400px;
     max-height: 60vh;
     overflow-y: auto;
+    overflow-x: hidden;
     color: #d4d4d4;
   }
 

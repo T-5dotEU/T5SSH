@@ -90,6 +90,7 @@
     onConnect={handleConnect}
     onCancel={() => { showConnectionDialog = false; editProfile = null; }}
     initialProfile={editProfile}
+    canCancel={tabStore.tabs.length > 0}
   />
 {/if}
 

@@ -2,7 +2,7 @@
   import { onMount } from 'svelte';
   import { saveProfile, loadProfiles, deleteProfile } from '$lib/api/profiles.js';
 
-  let { onConnect = null, onCancel = null, initialProfile = null } = $props();
+  let { onConnect = null, onCancel = null, initialProfile = null, canCancel = true } = $props();
 
   let savedProfiles = $state([]);
   let name = $state('');
@@ -164,7 +164,7 @@
   function handleKeydown(e) {
     if (e.key === 'Escape') {
       if (contextMenu) { closeContextMenu(); return; }
-      if (onCancel) onCancel();
+      if (canCancel && onCancel) onCancel();
     }
     if (e.key === 'Enter' && !e.shiftKey) handleConnect();
   }
@@ -252,7 +252,9 @@
     </div>
 
     <div class="actions">
-      <button class="btn cancel" onclick={onCancel}>Cancel</button>
+      {#if canCancel}
+        <button class="btn cancel" onclick={onCancel}>Cancel</button>
+      {/if}
       {#if editingProfile}
         <button class="btn secondary" onclick={clearForm}>New</button>
         <button class="btn success" onclick={handleSave} disabled={saving}>
