@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.5.1-dev — 2026-03-27
+
+### CI/CD
+
+- GitHub Actions workflow for .deb, .rpm and Windows builds
+
 ## 1.5.0-dev — 2026-03-27
 
 ### Branding
