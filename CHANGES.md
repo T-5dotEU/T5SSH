@@ -31,3 +31,6 @@
 - Profile editing loads data into form with visual indicator
 - Profile click now loads into form (instead of instant connect), with scroll to Connect button
 - Window geometry (position & size) saved to ~/.config/ultrassh/settings.json and restored on startup
+- Profile list (☰) click loads profile into ConnectionDialog instead of direct connect
+- Sticky "ready to connect" banner with ▶ Connect button pinned at top of dialog when profile loaded
+- Right-click context menu (Edit / Delete) in profile list dialog, consistent with connection dialog

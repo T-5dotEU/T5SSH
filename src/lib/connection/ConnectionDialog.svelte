@@ -2,7 +2,7 @@
   import { onMount } from 'svelte';
   import { saveProfile, loadProfiles, deleteProfile } from '$lib/api/profiles.js';
 
-  let { onConnect = null, onCancel = null } = $props();
+  let { onConnect = null, onCancel = null, initialProfile = null } = $props();
 
   let savedProfiles = $state([]);
   let name = $state('');
@@ -19,12 +19,17 @@
   let editingProfile = $state(null);
   let contextMenu = $state(null);
   let connectBtn;
+  let formGrid;
 
   onMount(async () => {
     try {
       savedProfiles = await loadProfiles();
     } catch (e) {
       console.error('Failed to load profiles:', e);
+    }
+    if (initialProfile) {
+      loadIntoForm(initialProfile);
+      requestAnimationFrame(() => formGrid?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
     }
   });
 
@@ -163,6 +168,13 @@
 <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 <div class="overlay" onkeydown={handleKeydown} role="dialog" aria-modal="true">
   <div class="dialog">
+    {#if editingProfile && host}
+      <div class="profile-banner">
+        <span class="banner-text">📋 <strong>{editingProfile}</strong> — {user ? `${user}@` : ''}{host}:{port}</span>
+        <button class="btn primary banner-connect" onclick={handleConnect}>▶ Connect</button>
+      </div>
+    {/if}
+
     <h2>{editingProfile ? `Edit: ${editingProfile}` : 'New Connection'}</h2>
 
     {#if savedProfiles.length > 0}
@@ -196,7 +208,7 @@
       <div class="error">{error}</div>
     {/if}
 
-    <div class="form-grid">
+    <div class="form-grid" bind:this={formGrid}>
       <label for="cd-name">Profile Name</label>
       <input id="cd-name" type="text" bind:value={name} placeholder="My Server (optional)">
 
@@ -302,6 +314,36 @@
 
   .saved-profiles {
     margin-bottom: 8px;
+  }
+
+  .profile-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 14px;
+    background: #1a3a1a;
+    border: 1px solid #2d6a30;
+    border-radius: 6px;
+    margin: -24px -24px 12px -24px;
+    padding: 12px 24px;
+    position: sticky;
+    top: -24px;
+    z-index: 10;
+  }
+
+  .banner-text {
+    font-size: 13px;
+    color: #c8e6c9;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .banner-connect {
+    flex-shrink: 0;
+    padding: 6px 14px;
+    font-size: 13px;
   }
 
   .profile-list {

@@ -7,6 +7,7 @@
 
   let showConnectionDialog = $state(false);
   let showProfileList = $state(false);
+  let editProfile = $state(null);
 
   // Show connection dialog on start if no tabs exist
   $effect(() => {
@@ -18,11 +19,13 @@
   function handleConnect(sshProfile) {
     tabStore.addTab(sshProfile);
     showConnectionDialog = false;
+    editProfile = null;
   }
 
-  function handleProfileSelect(sshProfile) {
-    tabStore.addTab(sshProfile);
+  function handleProfileEdit(profile) {
     showProfileList = false;
+    editProfile = profile;
+    showConnectionDialog = true;
   }
 
   function handleExit(sessionId) {
@@ -52,14 +55,15 @@
 {#if showConnectionDialog}
   <ConnectionDialog
     onConnect={handleConnect}
-    onCancel={() => showConnectionDialog = false}
+    onCancel={() => { showConnectionDialog = false; editProfile = null; }}
+    initialProfile={editProfile}
   />
 {/if}
 
 {#if showProfileList}
   <ProfileList
-    onSelect={handleProfileSelect}
     onCancel={() => showProfileList = false}
+    onEdit={handleProfileEdit}
   />
 {/if}
 

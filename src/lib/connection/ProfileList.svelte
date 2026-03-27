@@ -2,10 +2,11 @@
   import { onMount } from 'svelte';
   import { loadProfiles, deleteProfile } from '$lib/api/profiles.js';
 
-  let { onSelect = null, onCancel = null } = $props();
+  let { onCancel = null, onEdit = null } = $props();
 
   let profiles = $state([]);
   let loading = $state(true);
+  let contextMenu = $state(null);
 
   onMount(async () => {
     try {
@@ -17,29 +18,49 @@
     }
   });
 
-  async function handleDelete(e, name) {
+  function handleSelect(profile) {
+    if (onEdit) onEdit(profile);
+  }
+
+  function handleContextMenu(e, profile) {
+    e.preventDefault();
     e.stopPropagation();
+    contextMenu = { x: e.clientX, y: e.clientY, profile };
+  }
+
+  function closeContextMenu() {
+    contextMenu = null;
+  }
+
+  function contextEdit() {
+    if (contextMenu && onEdit) onEdit(contextMenu.profile);
+    closeContextMenu();
+  }
+
+  async function contextDelete() {
+    if (!contextMenu) return;
+    const profileName = contextMenu.profile.name;
+    closeContextMenu();
     try {
-      await deleteProfile(name);
-      profiles = profiles.filter((p) => p.name !== name);
+      await deleteProfile(profileName);
+      profiles = profiles.filter((p) => p.name !== profileName);
     } catch (err) {
       console.error('Failed to delete profile:', err);
     }
   }
 
-  function handleSelect(profile) {
-    if (onSelect) onSelect(profile.ssh);
-  }
-
   function handleKeydown(e) {
-    if (e.key === 'Escape' && onCancel) onCancel();
+    if (e.key === 'Escape') {
+      if (contextMenu) { closeContextMenu(); return; }
+      if (onCancel) onCancel();
+    }
   }
 </script>
 
 <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 <div class="overlay" onkeydown={handleKeydown} role="dialog" aria-modal="true">
   <div class="dialog">
-    <h2>Saved Profiles</h2>
+    <h2>Saved Profiles <span class="hint">(click = load, right-click = options)</span></h2>
 
     {#if loading}
       <p class="status">Loading...</p>
@@ -48,14 +69,20 @@
     {:else}
       <div class="profile-list">
         {#each profiles as profile}
-          <div class="profile-item" onclick={() => handleSelect(profile)} onkeydown={(e) => e.key === 'Enter' && handleSelect(profile)} role="button" tabindex="0">
+          <div
+            class="profile-item"
+            onclick={() => handleSelect(profile)}
+            oncontextmenu={(e) => handleContextMenu(e, profile)}
+            onkeydown={(e) => e.key === 'Enter' && handleSelect(profile)}
+            role="button"
+            tabindex="0"
+          >
             <div class="profile-info">
               <span class="profile-name">{profile.name}</span>
               <span class="profile-host">
                 {profile.ssh.user ? `${profile.ssh.user}@` : ''}{profile.ssh.host}:{profile.ssh.port}
               </span>
             </div>
-            <button class="btn-delete" onclick={(e) => handleDelete(e, profile.name)}>×</button>
           </div>
         {/each}
       </div>
@@ -66,6 +93,16 @@
     </div>
   </div>
 </div>
+
+{#if contextMenu}
+  <!-- svelte-ignore a11y_no_static_element_interactions -->
+  <div class="context-overlay" onclick={closeContextMenu} oncontextmenu={(e) => { e.preventDefault(); closeContextMenu(); }}>
+    <div class="context-menu" style="left: {contextMenu.x}px; top: {contextMenu.y}px;">
+      <button class="context-item" onclick={contextEdit}>✏️ Edit</button>
+      <button class="context-item danger" onclick={contextDelete}>🗑️ Delete</button>
+    </div>
+  </div>
+{/if}
 
 <style>
   .overlay {
@@ -93,6 +130,12 @@
     margin: 0 0 16px;
     font-size: 18px;
     color: #fff;
+  }
+
+  .hint {
+    font-size: 11px;
+    color: #666;
+    font-weight: normal;
   }
 
   .status {
@@ -143,19 +186,6 @@
     color: #888;
   }
 
-  .btn-delete {
-    background: none;
-    border: none;
-    color: #666;
-    font-size: 18px;
-    cursor: pointer;
-    padding: 0 4px;
-  }
-
-  .btn-delete:hover {
-    color: #e44;
-  }
-
   .actions {
     display: flex;
     justify-content: flex-end;
@@ -174,5 +204,42 @@
 
   .btn:hover {
     background: #4a4a4a;
+  }
+
+  .context-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+  }
+
+  .context-menu {
+    position: fixed;
+    background: #2d2d2d;
+    border: 1px solid #555;
+    border-radius: 6px;
+    padding: 4px 0;
+    min-width: 140px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    z-index: 201;
+  }
+
+  .context-item {
+    display: block;
+    width: 100%;
+    padding: 8px 16px;
+    background: none;
+    border: none;
+    color: #d4d4d4;
+    font-size: 13px;
+    cursor: pointer;
+    text-align: left;
+  }
+
+  .context-item:hover {
+    background: #094771;
+  }
+
+  .context-item.danger:hover {
+    background: #5c2020;
   }
 </style>
