@@ -26,3 +26,6 @@
 - IPC commands: save_profile, load_profiles, delete_profile
 - Auto-focus terminal after connect (password input works immediately)
 - Profiles button highlighted in tab bar for better discoverability
+- Saved profiles listed in connection dialog with quick-connect on click
+- Right-click context menu on profiles (Edit / Delete)
+- Profile editing loads data into form with visual indicator

@@ -1,21 +1,88 @@
 <script>
-  import { saveProfile } from '$lib/api/profiles.js';
+  import { onMount } from 'svelte';
+  import { saveProfile, loadProfiles, deleteProfile } from '$lib/api/profiles.js';
 
-  let { onConnect = null, onCancel = null, editProfile = null } = $props();
+  let { onConnect = null, onCancel = null } = $props();
 
-  let name = $state(editProfile?.name ?? '');
-  let host = $state(editProfile?.ssh?.host ?? '');
-  let port = $state(editProfile?.ssh?.port ?? 22);
-  let user = $state(editProfile?.ssh?.user ?? '');
-  let identityFile = $state(editProfile?.ssh?.identity_file ?? '');
-  let jumpHost = $state(editProfile?.ssh?.jump_host ?? '');
-  let agentForwarding = $state(editProfile?.ssh?.agent_forwarding ?? false);
-  let portForwards = $state(
-    editProfile?.ssh?.port_forwards?.map((f) => ({ ...f })) ?? []
-  );
+  let savedProfiles = $state([]);
+  let name = $state('');
+  let host = $state('');
+  let port = $state(22);
+  let user = $state('');
+  let identityFile = $state('');
+  let jumpHost = $state('');
+  let agentForwarding = $state(false);
+  let portForwards = $state([]);
 
   let saving = $state(false);
   let error = $state('');
+  let editingProfile = $state(null);
+  let contextMenu = $state(null);
+
+  onMount(async () => {
+    try {
+      savedProfiles = await loadProfiles();
+    } catch (e) {
+      console.error('Failed to load profiles:', e);
+    }
+  });
+
+  function loadIntoForm(profile) {
+    editingProfile = profile.name;
+    name = profile.name;
+    host = profile.ssh.host;
+    port = profile.ssh.port;
+    user = profile.ssh.user ?? '';
+    identityFile = profile.ssh.identity_file ?? '';
+    jumpHost = profile.ssh.jump_host ?? '';
+    agentForwarding = profile.ssh.agent_forwarding ?? false;
+    portForwards = profile.ssh.port_forwards?.map((f) => ({ ...f })) ?? [];
+  }
+
+  function clearForm() {
+    editingProfile = null;
+    name = '';
+    host = '';
+    port = 22;
+    user = '';
+    identityFile = '';
+    jumpHost = '';
+    agentForwarding = false;
+    portForwards = [];
+    error = '';
+  }
+
+  function quickConnect(profile) {
+    if (onConnect) onConnect(profile.ssh);
+  }
+
+  function handleContextMenu(e, profile) {
+    e.preventDefault();
+    e.stopPropagation();
+    contextMenu = { x: e.clientX, y: e.clientY, profile };
+  }
+
+  function closeContextMenu() {
+    contextMenu = null;
+  }
+
+  function contextEdit() {
+    if (contextMenu) loadIntoForm(contextMenu.profile);
+    closeContextMenu();
+  }
+
+  async function contextDelete() {
+    if (!contextMenu) return;
+    const profileName = contextMenu.profile.name;
+    closeContextMenu();
+    try {
+      await deleteProfile(profileName);
+      savedProfiles = savedProfiles.filter((p) => p.name !== profileName);
+      if (editingProfile === profileName) clearForm();
+    } catch (err) {
+      console.error('Failed to delete profile:', err);
+    }
+  }
 
   function addPortForward() {
     portForwards.push({ local_port: 0, remote_host: 'localhost', remote_port: 0 });
@@ -52,7 +119,7 @@
     if (onConnect) onConnect(buildSshProfile());
   }
 
-  async function handleSaveAndConnect() {
+  async function handleSave() {
     if (!host) {
       error = 'Host is required';
       return;
@@ -64,8 +131,16 @@
     error = '';
     saving = true;
     try {
-      await saveProfile({ name, ssh: buildSshProfile(), rows: 24, cols: 80 });
-      if (onConnect) onConnect(buildSshProfile());
+      const profile = { name, ssh: buildSshProfile(), rows: 24, cols: 80 };
+      await saveProfile(profile);
+      const idx = savedProfiles.findIndex((p) => p.name === name);
+      if (idx >= 0) {
+        savedProfiles[idx] = profile;
+      } else {
+        savedProfiles.push(profile);
+      }
+      savedProfiles = savedProfiles;
+      editingProfile = name;
     } catch (e) {
       error = `Save failed: ${e}`;
     } finally {
@@ -73,8 +148,16 @@
     }
   }
 
+  async function handleSaveAndConnect() {
+    await handleSave();
+    if (!error) handleConnect();
+  }
+
   function handleKeydown(e) {
-    if (e.key === 'Escape' && onCancel) onCancel();
+    if (e.key === 'Escape') {
+      if (contextMenu) { closeContextMenu(); return; }
+      if (onCancel) onCancel();
+    }
     if (e.key === 'Enter' && !e.shiftKey) handleConnect();
   }
 </script>
@@ -82,7 +165,34 @@
 <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 <div class="overlay" onkeydown={handleKeydown} role="dialog" aria-modal="true">
   <div class="dialog">
-    <h2>New Connection</h2>
+    <h2>{editingProfile ? `Edit: ${editingProfile}` : 'New Connection'}</h2>
+
+    {#if savedProfiles.length > 0}
+      <div class="saved-profiles">
+        <h3>Saved Profiles <span class="hint">(click = connect, right-click = options)</span></h3>
+        <div class="profile-list">
+          {#each savedProfiles as profile}
+            <div
+              class="profile-item"
+              class:editing={editingProfile === profile.name}
+              onclick={() => quickConnect(profile)}
+              oncontextmenu={(e) => handleContextMenu(e, profile)}
+              role="button"
+              tabindex="0"
+              onkeydown={(e) => e.key === 'Enter' && quickConnect(profile)}
+            >
+              <div class="profile-info">
+                <span class="profile-name">{profile.name}</span>
+                <span class="profile-host">
+                  {profile.ssh.user ? `${profile.ssh.user}@` : ''}{profile.ssh.host}:{profile.ssh.port}
+                </span>
+              </div>
+            </div>
+          {/each}
+        </div>
+      </div>
+      <hr class="divider">
+    {/if}
 
     {#if error}
       <div class="error">{error}</div>
@@ -128,6 +238,12 @@
 
     <div class="actions">
       <button class="btn secondary" onclick={onCancel}>Cancel</button>
+      {#if editingProfile}
+        <button class="btn secondary" onclick={clearForm}>New</button>
+        <button class="btn save" onclick={handleSave} disabled={saving}>
+          {saving ? 'Saving...' : '💾 Save'}
+        </button>
+      {/if}
       <button class="btn primary" onclick={handleConnect}>Connect</button>
       <button class="btn save" onclick={handleSaveAndConnect} disabled={saving}>
         {saving ? 'Saving...' : '💾 Save & Connect'}
@@ -135,6 +251,16 @@
     </div>
   </div>
 </div>
+
+{#if contextMenu}
+  <!-- svelte-ignore a11y_no_static_element_interactions -->
+  <div class="context-overlay" onclick={closeContextMenu} oncontextmenu={(e) => { e.preventDefault(); closeContextMenu(); }}>
+    <div class="context-menu" style="left: {contextMenu.x}px; top: {contextMenu.y}px;">
+      <button class="context-item" onclick={contextEdit}>✏️ Edit</button>
+      <button class="context-item danger" onclick={contextDelete}>🗑️ Delete</button>
+    </div>
+  </div>
+{/if}
 
 <style>
   .overlay {
@@ -168,6 +294,68 @@
     margin: 0 0 8px;
     font-size: 14px;
     color: #ccc;
+  }
+
+  .hint {
+    font-size: 11px;
+    color: #666;
+    font-weight: normal;
+  }
+
+  .saved-profiles {
+    margin-bottom: 8px;
+  }
+
+  .profile-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    max-height: 180px;
+    overflow-y: auto;
+  }
+
+  .profile-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    background: #1e1e1e;
+    border: 1px solid #3c3c3c;
+    border-radius: 4px;
+    cursor: pointer;
+    color: #d4d4d4;
+  }
+
+  .profile-item:hover {
+    border-color: #007acc;
+    background: #252525;
+  }
+
+  .profile-item.editing {
+    border-color: #2d6a30;
+    background: #1e2e1e;
+  }
+
+  .profile-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .profile-name {
+    font-size: 13px;
+    color: #fff;
+  }
+
+  .profile-host {
+    font-size: 11px;
+    color: #888;
+  }
+
+  .divider {
+    border: none;
+    border-top: 1px solid #3c3c3c;
+    margin: 12px 0;
   }
 
   .error {
@@ -304,5 +492,44 @@
   .btn:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+  }
+
+  .context-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+  }
+
+  .context-menu {
+    position: fixed;
+    background: #2d2d2d;
+    border: 1px solid #555;
+    border-radius: 6px;
+    padding: 4px 0;
+    min-width: 140px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    z-index: 201;
+  }
+
+  .context-item {
+    display: block;
+    width: 100%;
+    padding: 8px 16px;
+    background: none;
+    border: none;
+    color: #d4d4d4;
+    font-size: 13px;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .context-item:hover {
+    background: #094771;
+    color: #fff;
+  }
+
+  .context-item.danger:hover {
+    background: #5c2020;
+    color: #f88;
   }
 </style>
