@@ -77,6 +77,11 @@
       sessionId = currentSessionId;
       if (onSessionCreated) onSessionCreated(currentSessionId);
 
+      // Re-fit after session creation to catch any size changes
+      // that occurred while the session was being established
+      fitAddon.fit();
+      resizeSession(currentSessionId, terminal.rows, terminal.cols);
+
       terminal.focus();
 
       terminal.onData((/** @type {string} */ data) => {

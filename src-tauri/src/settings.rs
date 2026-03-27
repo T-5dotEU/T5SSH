@@ -3,12 +3,21 @@ use std::fs;
 use std::path::PathBuf;
 use tracing::{error, info};
 
-#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Settings {
     #[serde(default)]
     pub window: Option<WindowGeometry>,
-    #[serde(default)]
+    #[serde(default = "default_terminal_settings")]
     pub terminal: Option<TerminalSettings>,
+}
+
+impl Default for Settings {
+    fn default() -> Self {
+        Self {
+            window: None,
+            terminal: Some(TerminalSettings::default()),
+        }
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -29,6 +38,21 @@ pub struct TerminalSettings {
     pub color_scheme: Option<String>,
     #[serde(default)]
     pub scrollback_lines: Option<u32>,
+}
+
+impl Default for TerminalSettings {
+    fn default() -> Self {
+        Self {
+            font_family: Some("Menlo, Monaco, \"Courier New\", monospace".to_string()),
+            font_size: Some(14),
+            color_scheme: Some("dark".to_string()),
+            scrollback_lines: Some(10000),
+        }
+    }
+}
+
+fn default_terminal_settings() -> Option<TerminalSettings> {
+    Some(TerminalSettings::default())
 }
 
 fn settings_path() -> Result<PathBuf, String> {

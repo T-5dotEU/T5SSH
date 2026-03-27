@@ -1,7 +1,11 @@
 # Changelog
 
-## 1.7.1-dev — 2026-03-27
+## 1.7.1-dev — 2026-03-28
 
+### Bugfixes
+
+- Default dark theme on first start (no more missing color scheme)
+- Fixed initial terminal width mismatch: PTY size synced after session creation
 - Confirmed: SSH login and terminal output working on Windows
 
 ## 1.7.0-dev — 2026-03-27
