@@ -1,7 +1,7 @@
 use crate::ssh::Profile;
 use std::fs;
 use std::path::PathBuf;
-use tracing::{error, info};
+use tracing::info;
 
 fn profiles_path() -> Result<PathBuf, String> {
     let config_dir = dirs::config_dir().ok_or("Could not determine config directory")?;
@@ -27,7 +27,9 @@ pub fn save_profiles(profiles: &[Profile]) -> Result<(), String> {
     let path = profiles_path()?;
     let data = serde_json::to_string_pretty(profiles)
         .map_err(|e| format!("Failed to serialize profiles: {e}"))?;
-    fs::write(&path, data).map_err(|e| format!("Failed to write profiles: {e}"))?;
+    let tmp = path.with_extension("json.tmp");
+    fs::write(&tmp, &data).map_err(|e| format!("Failed to write profiles tmp: {e}"))?;
+    fs::rename(&tmp, &path).map_err(|e| format!("Failed to rename profiles: {e}"))?;
     info!("Saved {} profiles to {:?}", profiles.len(), path);
     Ok(())
 }

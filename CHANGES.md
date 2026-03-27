@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.2.1 — 2026-03-27
+
+- Fix: Ctrl+Shift+C/V now handled directly in xterm key handler (previously not working)
+- Fix: Profile delete now requires confirmation dialog
+- Fix: Zombie processes — child.wait() after child.kill() in all session cleanup paths
+- Fix: Removed unused SessionState variants (Creating, Connecting) and unused import
+- Fix: Mutex .unwrap() replaced with proper error handling in IPC commands
+- Fix: .expect() on window lookup replaced with graceful match
+- Fix: Atomic file writes for settings.json and profiles.json (write to .tmp, then rename)
+- Fix: Deduplicated window geometry save code into helper function
+- Fix: Context menu viewport bounds check (no off-screen rendering)
+- Fix: Clipboard readText() .catch() for denied permissions
+- Fix: terminalRefs cleaned up on tab close (memory leak)
+- Fix: invoke('quit_app') error handling
+- ProfileList dialog: added "+ New Connection" button
+- Cargo check: 0 warnings, 0 errors
+
 ## 0.2.0 — 2026-03-27
 
 - Copy/Paste: Ctrl+Shift+C / Ctrl+Shift+V (like KDE Konsole)

@@ -46,8 +46,11 @@ pub fn save_settings(settings: &Settings) {
         Ok(path) => {
             match serde_json::to_string_pretty(settings) {
                 Ok(json) => {
-                    if let Err(e) = fs::write(&path, json) {
-                        error!("Failed to write settings: {e}");
+                    let tmp = path.with_extension("json.tmp");
+                    if let Err(e) = fs::write(&tmp, &json) {
+                        error!("Failed to write settings tmp: {e}");
+                    } else if let Err(e) = fs::rename(&tmp, &path) {
+                        error!("Failed to rename settings: {e}");
                     } else {
                         info!("Settings saved");
                     }

@@ -4,7 +4,7 @@ use crate::ssh::{build_ssh_command, SshProfile};
 use serde::Serialize;
 use std::io::{Read, Write};
 use tauri::{AppHandle, Emitter, State};
-use tracing::{error, info};
+use tracing::{error, info, warn};
 use uuid::Uuid;
 
 #[derive(Clone, Serialize)]
@@ -58,8 +58,10 @@ pub async fn create_session(
 
     // Take the reader out of the session for the background thread
     let reader = {
-        let mut sessions_lock = sessions.lock().unwrap();
-        let session = sessions_lock.get_mut(&output_session_id).unwrap();
+        let mut sessions_lock = sessions.lock()
+            .map_err(|e| format!("Failed to lock sessions: {}", e))?;
+        let session = sessions_lock.get_mut(&output_session_id)
+            .ok_or_else(|| format!("Session {} not found after insert", output_session_id))?;
         // We need to move the reader out — replace with a dummy
         let reader = std::mem::replace(
             &mut session.pty_handle.master_reader,
@@ -124,7 +126,8 @@ pub async fn send_input(
     session_id: String,
     data: Vec<u8>,
 ) -> Result<(), String> {
-    let mut sessions = state.sessions.lock().unwrap();
+    let mut sessions = state.sessions.lock()
+        .map_err(|e| format!("Failed to lock sessions: {}", e))?;
     let session = sessions
         .get_mut(&session_id)
         .ok_or_else(|| format!("Session {} not found", session_id))?;
@@ -151,7 +154,8 @@ pub async fn resize_session(
     rows: u16,
     cols: u16,
 ) -> Result<(), String> {
-    let sessions = state.sessions.lock().unwrap();
+    let sessions = state.sessions.lock()
+        .map_err(|e| format!("Failed to lock sessions: {}", e))?;
     let session = sessions
         .get(&session_id)
         .ok_or_else(|| format!("Session {} not found", session_id))?;
@@ -170,12 +174,13 @@ pub async fn close_session(
         .remove(&session_id)
         .ok_or_else(|| format!("Session {} not found", session_id))?;
 
-    // Kill the child process
+    // Kill and reap the child process
     session
         .pty_handle
         .child
         .kill()
         .map_err(|e| format!("Failed to kill child: {}", e))?;
+    let _ = session.pty_handle.child.wait();
 
     Ok(())
 }
@@ -205,7 +210,10 @@ pub async fn close_all_sessions(state: State<'_, SessionManager>) -> Result<(), 
     info!("Closing all sessions");
     let sessions = state.drain_all();
     for mut session in sessions {
-        let _ = session.pty_handle.child.kill();
+        if let Err(e) = session.pty_handle.child.kill() {
+            warn!("Failed to kill child: {}", e);
+        }
+        let _ = session.pty_handle.child.wait();
     }
     Ok(())
 }
@@ -215,7 +223,10 @@ pub async fn quit_app(app: AppHandle, state: State<'_, SessionManager>) -> Resul
     info!("Quitting app — closing all sessions");
     let sessions = state.drain_all();
     for mut session in sessions {
-        let _ = session.pty_handle.child.kill();
+        if let Err(e) = session.pty_handle.child.kill() {
+            warn!("Failed to kill child: {}", e);
+        }
+        let _ = session.pty_handle.child.wait();
     }
     app.exit(0);
     Ok(())

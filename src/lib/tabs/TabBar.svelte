@@ -14,7 +14,7 @@
 
   async function removeTab(e, id) {
     e.stopPropagation();
-    const tab = tabStore.getTab(id);
+    const tab = tabStore.tabs.find(t => t.id === id);
     if (tab && tab.sessionId && !tab.disconnected) {
       if (!confirm('Active session — disconnect and close tab?')) return;
     }

@@ -62,7 +62,11 @@
   function handleContextMenu(e, profile) {
     e.preventDefault();
     e.stopPropagation();
-    contextMenu = { x: e.clientX, y: e.clientY, profile };
+    let x = e.clientX;
+    let y = e.clientY;
+    if (x > window.innerWidth - 150) x = window.innerWidth - 150;
+    if (y > window.innerHeight - 80) y = window.innerHeight - 80;
+    contextMenu = { x, y, profile };
   }
 
   function closeContextMenu() {
@@ -78,6 +82,7 @@
     if (!contextMenu) return;
     const profileName = contextMenu.profile.name;
     closeContextMenu();
+    if (!confirm(`Delete profile "${profileName}"?`)) return;
     try {
       await deleteProfile(profileName);
       savedProfiles = savedProfiles.filter((p) => p.name !== profileName);

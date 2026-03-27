@@ -2,7 +2,7 @@
   import { onMount } from 'svelte';
   import { loadProfiles, deleteProfile } from '$lib/api/profiles.js';
 
-  let { onCancel = null, onEdit = null } = $props();
+  let { onCancel = null, onEdit = null, onNewConnection = null } = $props();
 
   let profiles = $state([]);
   let loading = $state(true);
@@ -25,7 +25,11 @@
   function handleContextMenu(e, profile) {
     e.preventDefault();
     e.stopPropagation();
-    contextMenu = { x: e.clientX, y: e.clientY, profile };
+    let x = e.clientX;
+    let y = e.clientY;
+    if (x > window.innerWidth - 150) x = window.innerWidth - 150;
+    if (y > window.innerHeight - 80) y = window.innerHeight - 80;
+    contextMenu = { x, y, profile };
   }
 
   function closeContextMenu() {
@@ -41,6 +45,7 @@
     if (!contextMenu) return;
     const profileName = contextMenu.profile.name;
     closeContextMenu();
+    if (!confirm(`Delete profile "${profileName}"?`)) return;
     try {
       await deleteProfile(profileName);
       profiles = profiles.filter((p) => p.name !== profileName);
@@ -90,6 +95,7 @@
 
     <div class="actions">
       <button class="btn" onclick={onCancel}>Close</button>
+      <button class="btn primary" onclick={() => { if (onNewConnection) onNewConnection(); }}>+ New Connection</button>
     </div>
   </div>
 </div>

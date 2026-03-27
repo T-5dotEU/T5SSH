@@ -7,8 +7,20 @@ mod ssh;
 
 use session::SessionManager;
 use settings::{load_settings, save_settings, Settings, WindowGeometry};
-use tauri::{Emitter, Manager};
+use tauri::{Emitter, Manager, WebviewWindow};
 use tracing_subscriber;
+
+fn save_window_geometry(window: &WebviewWindow) {
+    if let (Ok(pos), Ok(size)) = (window.outer_position(), window.outer_size()) {
+        let geo = WindowGeometry {
+            x: pos.x,
+            y: pos.y,
+            width: size.width,
+            height: size.height,
+        };
+        save_settings(&Settings { window: Some(geo) });
+    }
+}
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -35,7 +47,13 @@ pub fn run() {
     let saved_geometry = initial_settings.window.clone();
 
     builder = builder.setup(move |app| {
-        let window = app.get_webview_window("main").expect("main window not found");
+        let window = match app.get_webview_window("main") {
+            Some(w) => w,
+            None => {
+                tracing::error!("main window not found");
+                return Ok(());
+            }
+        };
 
         if let Some(geo) = saved_geometry {
             use tauri::{LogicalPosition, LogicalSize};
@@ -50,28 +68,10 @@ pub fn run() {
             use tauri::WindowEvent;
             match event {
                 WindowEvent::Resized(_) | WindowEvent::Moved(_) => {
-                    if let (Ok(pos), Ok(size)) = (win_geo.outer_position(), win_geo.outer_size()) {
-                        let geo = WindowGeometry {
-                            x: pos.x,
-                            y: pos.y,
-                            width: size.width,
-                            height: size.height,
-                        };
-                        save_settings(&Settings { window: Some(geo) });
-                    }
+                    save_window_geometry(&win_geo);
                 }
                 WindowEvent::CloseRequested { api, .. } => {
-                    // Save geometry
-                    if let (Ok(pos), Ok(size)) = (win_geo.outer_position(), win_geo.outer_size()) {
-                        let geo = WindowGeometry {
-                            x: pos.x,
-                            y: pos.y,
-                            width: size.width,
-                            height: size.height,
-                        };
-                        save_settings(&Settings { window: Some(geo) });
-                    }
-                    // Prevent immediate close, let frontend confirm
+                    save_window_geometry(&win_geo);
                     api.prevent_close();
                     let _ = win_close.emit("app:close-requested", ());
                 }

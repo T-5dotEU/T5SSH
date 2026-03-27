@@ -19,7 +19,7 @@
     if (tabStore.tabs.length > 0) {
       everHadTabs = true;
     } else if (everHadTabs) {
-      invoke('quit_app');
+      invoke('quit_app').catch(() => {});
     } else if (!showConnectionDialog && !showProfileList) {
       showConnectionDialog = true;
     }
@@ -53,6 +53,8 @@
 
   function handleExit(sessionId) {
     tabStore.markDisconnected(sessionId);
+    const tab = tabStore.tabs.find(t => t.sessionId === sessionId);
+    if (tab) delete terminalRefs[tab.id];
   }
 
   function handleReconnect(tabId) {
@@ -95,6 +97,7 @@
   <ProfileList
     onCancel={() => showProfileList = false}
     onEdit={handleProfileEdit}
+    onNewConnection={() => { showProfileList = false; showConnectionDialog = true; editProfile = null; }}
   />
 {/if}
 

@@ -91,9 +91,18 @@
     terminal.loadAddon(fitAddon);
     terminal.open(terminalDiv);
 
-    // Ctrl+Shift+C/V: let browser handle (not xterm)
+    // Ctrl+Shift+C/V: handle copy/paste directly in xterm's key handler
     terminal.attachCustomKeyEventHandler((e) => {
-      if (e.ctrlKey && e.shiftKey && (e.key === 'C' || e.key === 'V')) {
+      if (e.type !== 'keydown') return true;
+      if (e.ctrlKey && e.shiftKey && e.key === 'C') {
+        const sel = terminal.getSelection();
+        if (sel) navigator.clipboard.writeText(sel).catch(() => {});
+        return false;
+      }
+      if (e.ctrlKey && e.shiftKey && e.key === 'V') {
+        navigator.clipboard.readText().then((text) => {
+          if (text && currentSessionId) sendInput(currentSessionId, text);
+        }).catch(() => {});
         return false;
       }
       return true;
@@ -114,21 +123,6 @@
     const handleResize = () => fitAddon.fit();
     window.addEventListener('resize', handleResize);
 
-    function handleKeydown(e) {
-      if (e.ctrlKey && e.shiftKey && e.key === 'C') {
-        e.preventDefault();
-        const sel = terminal.getSelection();
-        if (sel) navigator.clipboard.writeText(sel);
-      }
-      if (e.ctrlKey && e.shiftKey && e.key === 'V') {
-        e.preventDefault();
-        navigator.clipboard.readText().then((text) => {
-          if (text && currentSessionId) sendInput(currentSessionId, text);
-        });
-      }
-    }
-    terminalDiv.addEventListener('keydown', handleKeydown);
-
     const observer = new ResizeObserver(() => {
       if (terminalDiv.offsetParent !== null) {
         fitAddon.fit();
@@ -140,7 +134,6 @@
     return () => {
       observer.disconnect();
       window.removeEventListener('resize', handleResize);
-      terminalDiv.removeEventListener('keydown', handleKeydown);
       cleanupListeners();
       if (currentSessionId) closeSession(currentSessionId).catch(() => {});
       terminal.dispose();

@@ -6,8 +6,6 @@ use std::sync::{Arc, Mutex};
 
 #[derive(Debug, Clone, Serialize, PartialEq)]
 pub enum SessionState {
-    Creating,
-    Connecting,
     Connected,
     Closed,
 }
@@ -51,25 +49,25 @@ impl SessionManager {
     pub fn insert(&self, session: Session) {
         self.sessions
             .lock()
-            .unwrap()
+            .expect("session lock poisoned")
             .insert(session.id.clone(), session);
     }
 
     pub fn remove(&self, id: &str) -> Option<Session> {
-        self.sessions.lock().unwrap().remove(id)
+        self.sessions.lock().expect("session lock poisoned").remove(id)
     }
 
     pub fn list(&self) -> Vec<SessionInfo> {
         self.sessions
             .lock()
-            .unwrap()
+            .expect("session lock poisoned")
             .values()
             .map(|s| s.info())
             .collect()
     }
 
     pub fn drain_all(&self) -> Vec<Session> {
-        let mut sessions = self.sessions.lock().unwrap();
+        let mut sessions = self.sessions.lock().expect("session lock poisoned");
         sessions.drain().map(|(_, s)| s).collect()
     }
 }
