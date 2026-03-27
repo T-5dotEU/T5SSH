@@ -3441,6 +3441,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "t5ssh"
+version = "1.5.0-dev"
+dependencies = [
+ "dirs",
+ "keyring",
+ "portable-pty",
+ "serde",
+ "serde_json",
+ "tauri",
+ "tauri-build",
+ "tauri-plugin-dialog",
+ "tokio",
+ "tracing",
+ "tracing-subscriber",
+ "uuid",
+]
+
+[[package]]
 name = "tao"
 version = "0.34.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4164,24 +4182,6 @@ name = "typenum"
 version = "1.19.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "562d481066bde0658276a35467c4af00bdc6ee726305698a55b86e61d7ad82bb"
-
-[[package]]
-name = "t5ssh"
-version = "1.4.0"
-dependencies = [
- "dirs",
- "keyring",
- "portable-pty",
- "serde",
- "serde_json",
- "tauri",
- "tauri-build",
- "tauri-plugin-dialog",
- "tokio",
- "tracing",
- "tracing-subscriber",
- "uuid",
-]
 
 [[package]]
 name = "unic-char-property"

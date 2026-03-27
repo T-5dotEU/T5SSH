@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.5.0-dev — 2026-03-27
+
+### Branding
+
+- Renamed project from UltraSSH to T5SSH (package.json, tauri.conf.json, Cargo.toml, window title, app identifier)
+
 ## 1.4.0 — 2026-03-27
 
 ### UI/UX Improvements
