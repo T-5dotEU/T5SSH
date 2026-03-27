@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.8.0 — 2026-03-28
+
+- Release: all 1.7.x-dev fixes confirmed on Windows and Linux
+
 ## 1.7.3-dev — 2026-03-28
 
 ### Bugfixes
