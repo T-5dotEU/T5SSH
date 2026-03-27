@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.7.0-dev — 2026-03-27
+
+### Bugfixes
+
+- Fixed race condition: event listeners now registered before session creation (SSH output was lost on Windows)
+- Fixed Windows SSH_ASKPASS script: now only responds to password prompts (was replying to all prompts)
+- Terminal shows "Connecting..." feedback during connection setup
+
 ## 1.6.0 — 2026-03-27
 
 - Release version bump (no code changes)

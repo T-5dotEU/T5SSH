@@ -73,7 +73,7 @@ pub async fn create_session(
             "esac\n",
         );
         #[cfg(windows)]
-        let script = "@echo off\r\necho %T5SSH_PASSWORD%\r\n";
+        let script = "@echo off\r\necho %1 | findstr /i \"assword\" >nul\r\nif %errorlevel%==0 (\r\n  echo %T5SSH_PASSWORD%\r\n) else (\r\n  exit /b 1\r\n)\r\n";
 
         std::fs::write(&askpass_file, script)
             .map_err(|e| format!("Failed to write askpass script: {e}"))?;

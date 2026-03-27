@@ -47,13 +47,12 @@
     const rows = terminal.rows;
     const cols = terminal.cols;
 
+    terminal.writeln('\x1b[36mConnecting...\x1b[0m');
+
     try {
-      currentSessionId = await createSession(profile, rows, cols, password, profileName);
-      sessionId = currentSessionId;
-      if (onSessionCreated) onSessionCreated(currentSessionId);
-
-      terminal.focus();
-
+      // Set up event listeners BEFORE creating the session to avoid
+      // missing output that arrives before listeners are registered.
+      // This is critical on Windows where ConPTY delivers data immediately.
       unlistenOutput = await onSessionOutput((/** @type {any} */ payload) => {
         if (payload.session_id === currentSessionId) {
           terminal.write(new Uint8Array(payload.data));
@@ -74,6 +73,12 @@
         }
       });
 
+      currentSessionId = await createSession(profile, rows, cols, password, profileName);
+      sessionId = currentSessionId;
+      if (onSessionCreated) onSessionCreated(currentSessionId);
+
+      terminal.focus();
+
       terminal.onData((/** @type {string} */ data) => {
         if (currentSessionId) {
           sendInput(currentSessionId, data);
@@ -81,6 +86,7 @@
       });
 
     } catch (e) {
+      cleanupListeners();
       terminal.writeln(`\r\n\x1b[31mConnection failed: ${e}\x1b[0m`);
       if (onExit) onExit(currentSessionId);
     }
