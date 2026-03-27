@@ -252,15 +252,15 @@
     </div>
 
     <div class="actions">
-      <button class="btn secondary" onclick={onCancel}>Cancel</button>
+      <button class="btn cancel" onclick={onCancel}>Cancel</button>
       {#if editingProfile}
         <button class="btn secondary" onclick={clearForm}>New</button>
-        <button class="btn save" onclick={handleSave} disabled={saving}>
+        <button class="btn success" onclick={handleSave} disabled={saving}>
           {saving ? 'Saving...' : '💾 Save'}
         </button>
       {/if}
       <button class="btn primary" onclick={handleConnect} bind:this={connectBtn}>Connect</button>
-      <button class="btn save" onclick={handleSaveAndConnect} disabled={saving}>
+      <button class="btn success" onclick={handleSaveAndConnect} disabled={saving}>
         {saving ? 'Saving...' : '💾 Save & Connect'}
       </button>
     </div>
@@ -479,8 +479,8 @@
 
   .btn-small {
     background: none;
-    border: 1px dashed #555;
-    color: #aaa;
+    border: 1px dashed #2d6a30;
+    color: #4ec9b0;
     padding: 4px 10px;
     border-radius: 4px;
     cursor: pointer;
@@ -488,8 +488,9 @@
   }
 
   .btn-small:hover {
-    border-color: #888;
-    color: #ccc;
+    border-color: #38833c;
+    background: rgba(45, 106, 48, 0.15);
+    color: #6fd8a8;
   }
 
   .actions {
@@ -534,6 +535,27 @@
     background: #38833c;
   }
 
+  .btn.success {
+    background: #2d6a30;
+    color: #fff;
+  }
+
+  .btn.success:hover {
+    background: #38833c;
+  }
+
+  .btn.cancel {
+    background: transparent;
+    border: 1px solid #c33;
+    color: #e55;
+  }
+
+  .btn.cancel:hover {
+    background: rgba(204, 51, 51, 0.15);
+    border-color: #e55;
+    color: #f77;
+  }
+
   .btn:disabled {
     opacity: 0.5;
     cursor: not-allowed;
@@ -571,6 +593,10 @@
   .context-item:hover {
     background: #094771;
     color: #fff;
+  }
+
+  .context-item.danger {
+    color: #e55;
   }
 
   .context-item.danger:hover {

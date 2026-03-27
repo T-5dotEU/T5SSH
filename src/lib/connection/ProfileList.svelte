@@ -95,7 +95,7 @@
 
     <div class="actions">
       <button class="btn" onclick={onCancel}>Close</button>
-      <button class="btn primary" onclick={() => { if (onNewConnection) onNewConnection(); }}>+ New Connection</button>
+      <button class="btn success" onclick={() => { if (onNewConnection) onNewConnection(); }}>+ New Connection</button>
     </div>
   </div>
 </div>
@@ -195,6 +195,7 @@
   .actions {
     display: flex;
     justify-content: flex-end;
+    gap: 8px;
     margin-top: 16px;
   }
 
@@ -210,6 +211,15 @@
 
   .btn:hover {
     background: #4a4a4a;
+  }
+
+  .btn.success {
+    background: #2d6a30;
+    color: #fff;
+  }
+
+  .btn.success:hover {
+    background: #38833c;
   }
 
   .context-overlay {
@@ -243,6 +253,10 @@
 
   .context-item:hover {
     background: #094771;
+  }
+
+  .context-item.danger {
+    color: #e55;
   }
 
   .context-item.danger:hover {

@@ -116,7 +116,7 @@
   }
 
   .add-tab {
-    color: #888;
+    color: #4ec9b0;
     font-size: 18px;
     padding: 0 14px;
     background: transparent;
@@ -124,8 +124,8 @@
   }
 
   .add-tab:hover {
-    color: #d4d4d4;
-    background: #333;
+    color: #6fd8a8;
+    background: rgba(45, 106, 48, 0.2);
   }
 
   .profiles-btn {

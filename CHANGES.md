@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.2.2 — 2026-03-27
+
+- Consistent button color scheme across all components:
+  - Primary (blue): Connect/Go actions
+  - Success (green): Add/Save actions, + tab button
+  - Cancel (red outline): Cancel buttons
+  - Danger (red): Delete actions
+  - Secondary (gray): Neutral actions
+
 ## 0.2.1 — 2026-03-27
 
 - Fix: Ctrl+Shift+C/V now handled directly in xterm key handler (previously not working)
