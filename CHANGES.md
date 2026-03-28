@@ -1,3 +1,9 @@
+## 1.9.9-dev — 2026-03-28
+
+### Build
+
+- DebugMouseWriter jetzt auf Modulebene, Build-Fehler behoben
+
 ## 1.9.8-dev — 2026-03-28
 
 ### CI/CD

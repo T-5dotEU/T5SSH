@@ -3442,7 +3442,7 @@ dependencies = [
 
 [[package]]
 name = "t5ssh"
-version = "1.9.8-dev"
+version = "1.9.9-dev"
 dependencies = [
  "dirs",
  "keyring",
