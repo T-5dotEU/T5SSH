@@ -34,16 +34,14 @@ pub fn create_pty(
         .try_clone_reader()
         .map_err(|e| format!("Failed to clone PTY reader: {}", e))?;
 
-    let writer = pty_pair
-        .master
-        let writer = pty_pair
-        .map_err(|e| format!("Failed to take PTY writer: {}", e))?;
+    let writer = Box::new(DebugMouseWriter::new(
+        pty_pair
+            .master
+            .take_writer()
+            .map_err(|e| format!("Failed to take PTY writer: {}", e))?
+    ));
 
     Ok((
-
-        // Wrap writer for debug logging
-        let writer = Box::new(DebugMouseWriter::new(writer));
-
         PtyHandle {
             master_writer: writer,
             master_reader: reader,

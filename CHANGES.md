@@ -1,3 +1,10 @@
+## 1.9.7-dev — 2026-03-28
+
+### Build
+
+- Syntaxfehler in ipc.rs und pty.rs behoben (break, doppeltes let writer)
+- Build-Fix nach Debug-Log-Integration
+
 ## 1.9.6-dev — 2026-03-28
 
 ### Debugging

@@ -1,6 +1,6 @@
 {
   "name": "t5ssh",
-  "version": "1.9.6-dev",
+  "version": "1.9.7-dev",
   "description": "",
   "type": "module",
   "scripts": {

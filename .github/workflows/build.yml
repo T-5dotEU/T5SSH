@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - main
+    tags-ignore:
+      - 'v*'
+  create:
     tags:
       - 'v*'
   workflow_dispatch:
@@ -112,7 +115,36 @@ jobs:
           name: t5ssh-rpm
           path: src-tauri/target/release/bundle/rpm/*.rpm
 
-  build-windows:
+
+  build-windows-main:
+    if: github.ref == 'refs/heads/main'
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+          shared-key: windows-build
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Build Tauri (Windows)
+        run: npx tauri build --bundles nsis
+
+  build-windows-tag:
+    if: startsWith(github.ref, 'refs/tags/v')
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
@@ -139,7 +171,6 @@ jobs:
         run: npx tauri build --bundles nsis
 
       - name: Upload Windows artifact
-        if: startsWith(github.ref, 'refs/tags/v')
         uses: actions/upload-artifact@v4
         with:
           name: t5ssh-windows
@@ -148,7 +179,7 @@ jobs:
 
   release:
     if: startsWith(github.ref, 'refs/tags/v')
-    needs: [build-windows]
+    needs: [build-windows-tag]
     runs-on: ubuntu-latest
     steps:
       - name: Download all artifacts
