@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.9.0-dev — 2026-03-28
+
+### Features
+
+- Terminal mouse support: set TERM=xterm-256color for SSH sessions, enabling mouse tracking in remote applications (mc, htop, etc.)
+- Confirmed: mouse support working on Linux
+- Windows test pending: build via GitHub Actions CI
+
 ## 1.8.0 — 2026-03-28
 
 - Release: all 1.7.x-dev fixes confirmed on Windows and Linux
