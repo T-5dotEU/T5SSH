@@ -1,3 +1,9 @@
+## 1.9.6-dev — 2026-03-28
+
+### Debugging
+
+- Dedizierte Maus-Debug-Logs auf allen Ebenen (Frontend→Backend→PTY→Backend)
+
 # Changelog
 
 

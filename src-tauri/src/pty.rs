@@ -1,5 +1,6 @@
 use portable_pty::{native_pty_system, CommandBuilder, MasterPty, PtySize};
 use std::io::{Read, Write};
+use tracing::debug;
 
 pub struct PtyHandle {
     pub master_writer: Box<dyn Write + Send>,
@@ -35,10 +36,14 @@ pub fn create_pty(
 
     let writer = pty_pair
         .master
-        .take_writer()
+        let writer = pty_pair
         .map_err(|e| format!("Failed to take PTY writer: {}", e))?;
 
     Ok((
+
+        // Wrap writer for debug logging
+        let writer = Box::new(DebugMouseWriter::new(writer));
+
         PtyHandle {
             master_writer: writer,
             master_reader: reader,
@@ -49,6 +54,33 @@ pub fn create_pty(
 }
 
 pub fn resize_pty(master: &dyn MasterPty, rows: u16, cols: u16) -> Result<(), String> {
+    // Wrapper for PTY writer to log mouse escape sequences
+    struct DebugMouseWriter<W: Write> {
+        inner: W,
+    }
+
+    impl<W: Write> DebugMouseWriter<W> {
+        pub fn new(inner: W) -> Self {
+            Self { inner }
+        }
+    }
+
+    impl<W: Write> Write for DebugMouseWriter<W> {
+        fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+            if buf.len() >= 3 && buf[0] == 0x1b && buf[1] == b'[' && (buf[2] == b'<' || (buf[2] >= b'0' && buf[2] <= b'9')) {
+                debug!(
+                    hex = %buf.iter().map(|b| format!("{:02x}", b)).collect::<Vec<_>>().join(" "),
+                    raw = ?buf,
+                    marker = "[T5SSH-MOUSE-PTY-WRITE]",
+                    "Mouse escape sequence written to PTY"
+                );
+            }
+            self.inner.write(buf)
+        }
+        fn flush(&mut self) -> std::io::Result<()> {
+            self.inner.flush()
+        }
+    }
     master
         .resize(PtySize {
             rows,

@@ -157,6 +157,16 @@ fn read_pty_output(mut reader: Box<dyn Read + Send>, session_id: &str, app: &App
             Ok(0) => break,
             Ok(n) => {
                 let data = buf[..n].to_vec();
+                // Maus-Escape-Sequenzen dediziert loggen
+                if data.len() >= 3 && data[0] == 0x1b && data[1] == b'[' && (data[2] == b'<' || (data[2] >= b'0' && data[2] <= b'9')) {
+                    tracing::debug!(
+                        session_id = %session_id,
+                        hex = %data.iter().map(|b| format!("{:02x}", b)).collect::<Vec<_>>().join(" "),
+                        raw = ?data,
+                        marker = "[T5SSH-MOUSE-PTY→BACKEND]",
+                        "Mouse escape sequence received from PTY"
+                    );
+                }
                 let _ = app.emit(
                     "session:output",
                     SessionOutput {
@@ -173,7 +183,7 @@ fn read_pty_output(mut reader: Box<dyn Read + Send>, session_id: &str, app: &App
                         session_id: session_id.to_string(),
                     },
                 );
-                break;
+                break,
             }
         }
     }
@@ -185,12 +195,14 @@ pub async fn send_input(
     session_id: String,
     data: Vec<u8>,
 ) -> Result<(), String> {
-    // Debug: log escape sequences to trace mouse events
-    if data.len() >= 3 && data[0] == 0x1b && data[1] == b'[' {
+    // Maus-Escape-Sequenzen dediziert loggen
+    if data.len() >= 3 && data[0] == 0x1b && data[1] == b'[' && (data[2] == b'<' || (data[2] >= b'0' && data[2] <= b'9')) {
         tracing::debug!(
             session_id = %session_id,
             hex = %data.iter().map(|b| format!("{:02x}", b)).collect::<Vec<_>>().join(" "),
-            "PTY input (escape seq)"
+            raw = ?data,
+            marker = "[T5SSH-MOUSE-BACKEND→PTY]",
+            "Mouse escape sequence received in backend"
         );
     }
 
