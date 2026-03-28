@@ -1,6 +1,12 @@
 # Changelog
 
 
+## 1.9.5-dev — 2026-03-28
+
+### CI/CD
+
+- Test build: main-Branch-Push und Tag als prerelease, um shared-key Rust-Cache aufzubauen
+
 ## 1.9.4-dev — 2026-03-28
 
 ### CI/CD
