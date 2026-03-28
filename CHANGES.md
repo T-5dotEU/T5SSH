@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.9.3-dev — 2026-03-28
+
+### CI/CD
+
+- Test build to verify Rust cache on Windows GitHub Actions runner
+
 ## 1.9.2-dev — 2026-03-28
 
 ### Debug
