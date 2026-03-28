@@ -1,5 +1,12 @@
 # Changelog
 
+
+## 1.9.4-dev — 2026-03-28
+
+### CI/CD
+
+- Test build: GitHub Actions Workflow jetzt mit shared-key und main-Branch-Cache-Warming für Rust-Cache
+
 ## 1.9.3-dev — 2026-03-28
 
 ### CI/CD

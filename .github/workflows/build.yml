@@ -2,6 +2,8 @@ name: Build & Release
 
 on:
   push:
+    branches:
+      - main
     tags:
       - 'v*'
   workflow_dispatch:
@@ -46,6 +48,7 @@ jobs:
         uses: swatinem/rust-cache@v2
         with:
           workspaces: src-tauri
+          shared-key: linux-build
 
       - name: Install frontend dependencies
         run: npm ci
@@ -95,6 +98,7 @@ jobs:
         uses: swatinem/rust-cache@v2
         with:
           workspaces: src-tauri
+          shared-key: linux-build
 
       - name: Install frontend dependencies
         run: npm ci
@@ -126,6 +130,7 @@ jobs:
         uses: swatinem/rust-cache@v2
         with:
           workspaces: src-tauri
+          shared-key: windows-build
 
       - name: Install frontend dependencies
         run: npm ci
@@ -134,6 +139,7 @@ jobs:
         run: npx tauri build --bundles nsis
 
       - name: Upload Windows artifact
+        if: startsWith(github.ref, 'refs/tags/v')
         uses: actions/upload-artifact@v4
         with:
           name: t5ssh-windows

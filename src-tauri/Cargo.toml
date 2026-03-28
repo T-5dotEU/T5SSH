@@ -1,6 +1,6 @@
 [package]
 name = "t5ssh"
-version = "1.9.3-dev"
+version = "1.9.4-dev"
 description = "A Tauri App"
 authors = ["you"]
 edition = "2021"
