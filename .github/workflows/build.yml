@@ -10,7 +10,10 @@ permissions:
   contents: write
 
 jobs:
-  build-linux-deb:
+  # Linux builds temporarily disabled to save CI resources
+  # build-linux-deb:
+  build-linux-deb-disabled:
+    if: false
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
@@ -56,7 +59,9 @@ jobs:
           name: t5ssh-deb
           path: src-tauri/target/release/bundle/deb/*.deb
 
-  build-linux-rpm:
+  # build-linux-rpm:
+  build-linux-rpm-disabled:
+    if: false
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
@@ -137,7 +142,7 @@ jobs:
 
   release:
     if: startsWith(github.ref, 'refs/tags/v')
-    needs: [build-linux-deb, build-linux-rpm, build-windows]
+    needs: [build-windows]
     runs-on: ubuntu-latest
     steps:
       - name: Download all artifacts
@@ -152,6 +157,4 @@ jobs:
           prerelease: ${{ contains(github.ref_name, '-') }}
           generate_release_notes: true
           files: |
-            artifacts/t5ssh-deb/*.deb
-            artifacts/t5ssh-rpm/*.rpm
             artifacts/t5ssh-windows/*.exe

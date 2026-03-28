@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.9.2-dev — 2026-03-28
+
+### Debug
+
+- Added mouse escape sequence debug logging (frontend console + backend tracing) to diagnose Windows mouse support
+- Confirmed: debug output shows mouse sequences on Linux (xterm.js sends SGR mouse protocol)
+- Windows test pending: build via GitHub Actions CI
+
 ## 1.9.1-dev — 2026-03-28
 
 ### Features
@@ -7,7 +15,7 @@
 - Show version in window title ("T5SSH v1.9.1-dev")
 - Added SSH -o SetEnv=TERM=xterm-256color to set TERM directly on remote side (fix for Windows/ConPTY not forwarding TERM)
 - Confirmed: Linux still working with both changes
-- Windows test pending: build via GitHub Actions CI
+- Windows: TERM=xterm-256color confirmed on remote, mouse support still not working (issue is not TERM — likely ConPTY mouse event passthrough)
 
 ## 1.9.0-dev — 2026-03-28
 

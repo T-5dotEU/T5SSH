@@ -86,6 +86,11 @@
 
       terminal.onData((/** @type {string} */ data) => {
         if (currentSessionId) {
+          // Debug: log mouse escape sequences (start with ESC [)
+          if (data.charCodeAt(0) === 27 && data.charAt(1) === '[') {
+            const hex = Array.from(new TextEncoder().encode(data)).map(b => b.toString(16).padStart(2, '0')).join(' ');
+            console.log('[T5SSH-DEBUG] onData escape seq:', hex, 'len:', data.length);
+          }
           sendInput(currentSessionId, data);
         }
       });

@@ -185,6 +185,15 @@ pub async fn send_input(
     session_id: String,
     data: Vec<u8>,
 ) -> Result<(), String> {
+    // Debug: log escape sequences to trace mouse events
+    if data.len() >= 3 && data[0] == 0x1b && data[1] == b'[' {
+        tracing::debug!(
+            session_id = %session_id,
+            hex = %data.iter().map(|b| format!("{:02x}", b)).collect::<Vec<_>>().join(" "),
+            "PTY input (escape seq)"
+        );
+    }
+
     let mut sessions = state.sessions.lock()
         .map_err(|e| format!("Failed to lock sessions: {}", e))?;
     let session = sessions
