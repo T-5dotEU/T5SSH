@@ -1,12 +1,21 @@
 # Changelog
 
+## 1.9.1-dev — 2026-03-28
+
+### Features
+
+- Show version in window title ("T5SSH v1.9.1-dev")
+- Added SSH -o SetEnv=TERM=xterm-256color to set TERM directly on remote side (fix for Windows/ConPTY not forwarding TERM)
+- Confirmed: Linux still working with both changes
+- Windows test pending: build via GitHub Actions CI
+
 ## 1.9.0-dev — 2026-03-28
 
 ### Features
 
 - Terminal mouse support: set TERM=xterm-256color for SSH sessions, enabling mouse tracking in remote applications (mc, htop, etc.)
 - Confirmed: mouse support working on Linux
-- Windows test pending: build via GitHub Actions CI
+- Windows: build successful, mouse support not yet working
 
 ## 1.8.0 — 2026-03-28
 

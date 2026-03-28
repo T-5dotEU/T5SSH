@@ -64,6 +64,9 @@ pub fn run() {
             }
         };
 
+        let version = app.config().version.clone().unwrap_or_default();
+        let _ = window.set_title(&format!("T5SSH v{}", version));
+
         if let Some(geo) = saved_geometry {
             use tauri::PhysicalPosition;
             use tauri::PhysicalSize;

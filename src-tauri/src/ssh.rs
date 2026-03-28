@@ -72,8 +72,12 @@ pub fn build_ssh_command(profile: &SshProfile) -> CommandBuilder {
     cmd.arg("ConnectTimeout=30");
 
     // Set TERM so remote applications (mc, htop, etc.) know the terminal
-    // supports mouse tracking and 256 colors
+    // supports mouse tracking and 256 colors.
+    // cmd.env sets it locally (works on Linux), -o SetEnv sets it on the
+    // remote side directly (needed for Windows/ConPTY which may not forward TERM).
     cmd.env("TERM", "xterm-256color");
+    cmd.arg("-o");
+    cmd.arg("SetEnv=TERM=xterm-256color");
 
     cmd.arg(&profile.host);
 
