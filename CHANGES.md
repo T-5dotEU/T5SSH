@@ -1,3 +1,9 @@
+## 1.9.8-dev — 2026-03-28
+
+### CI/CD
+
+- Workflow-Fix: main-Job läuft jetzt nicht mehr bei Tag-Push (doppelte Builds verhindert)
+
 ## 1.9.7-dev — 2026-03-28
 
 ### Build
